@@ -30,7 +30,7 @@ public class Book {
 
     LocalDate releaseDate;
 
-    Integer totalPage;
+    int totalPage;
 
     @Column(length = 30)
     String isbn;
