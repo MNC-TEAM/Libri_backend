@@ -1,17 +1,19 @@
 package monochrome.libri.member.domain;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
+import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 
 @Entity
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 @Builder
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
-    private int id;
+    private long id;
 
     @Column(length = 30)
     private SignType provider;
@@ -39,4 +41,30 @@ public class Member {
     private Status status;
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    public Member updateMember(
+            String username,
+            String nickname,
+            String passwordHash,
+            String profilePath
+    ) {
+        if (username != null) {
+            this.username = username;
+        }
+        if (nickname != null) {
+            this.nickname = nickname;
+        }
+        if (passwordHash != null) {
+            this.passwordHash = passwordHash;
+        }
+        if (profilePath != null) {
+            this.profilePath = profilePath;
+        }
+
+        return this;
+    }
+
+    public void withdraw() {
+        this.status = Status.DELETE;
+    }
 }
