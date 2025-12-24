@@ -4,7 +4,7 @@ import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import monochrome.libri.member.domain.Role;
-import monochrome.libri.member.domain.Status;
+import monochrome.libri.member.domain.MemberStatus;
 
 public record MemberUpdateRequestDto(
     @Nullable @Email
@@ -22,7 +22,7 @@ public record MemberUpdateRequestDto(
     @Nullable @Size(min = 8, max = 100)
     String rawPassword,                     // 비밀번호 변경 시에만 전달 (원문 → 서버에서 해시)
     @Nullable String profilePath,
-    @Nullable Status status,
+    @Nullable MemberStatus memberStatus,
     @Nullable Role role
 ) {
 }

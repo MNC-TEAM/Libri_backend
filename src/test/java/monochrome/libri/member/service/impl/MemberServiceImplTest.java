@@ -3,11 +3,10 @@ package monochrome.libri.member.service.impl;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.domain.Role;
-import monochrome.libri.member.domain.Status;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.repository.MemberRepository;
-import monochrome.libri.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +47,7 @@ class MemberServiceImplTest {
                 .nickname("oldNick")
                 .passwordHash("EXISTING_HASH")
                 .profilePath("old.png")
-                .status(Status.ACTIVE)
+                .memberStatus(MemberStatus.ACTIVE)
                 .role(Role.USER)
                 .build();
 
@@ -82,7 +81,7 @@ class MemberServiceImplTest {
         assertThat(updated.getEmailFromProvider()).isEqualTo("social@old.com");
         assertThat(updated.getEmailVerifiedFromProvider()).isTrue();
         assertThat(updated.getNickname()).isEqualTo("oldNick");
-        assertThat(updated.getStatus()).isEqualTo(Status.ACTIVE);
+        assertThat(updated.getMemberStatus()).isEqualTo(MemberStatus.ACTIVE);
         assertThat(updated.getRole()).isEqualTo(Role.USER);
 
         // 비밀번호 해시는 그대로 유지

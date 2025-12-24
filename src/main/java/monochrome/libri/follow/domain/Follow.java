@@ -17,12 +17,27 @@ public class Follow {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "follow_id")
-    private Member follow;
+    private Member follower;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "following_id")
     private Member following;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private FollowStatus followStatus;
+
+    public static Follow create(Member follower, Member following) {
+        return Follow.builder()
+                .follower(follower)
+                .following(following)
+                .followStatus(FollowStatus.FOLLOW)
+                .build();
+    }
+
+    public void unfollow() {
+        this.followStatus = FollowStatus.UNFOLLOW;
+    }
+    public void follow() {
+        this.followStatus = FollowStatus.FOLLOW;
+    }
 }

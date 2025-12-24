@@ -1,9 +1,9 @@
 package monochrome.libri.member.dto.response;
 
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.domain.Role;
 import monochrome.libri.member.domain.SignType;
-import monochrome.libri.member.domain.Status;
 
 public record MemberResponseDto(
     long id,
@@ -16,7 +16,7 @@ public record MemberResponseDto(
     String username,
     String nickname,
     String profilePath,
-    Status status,
+    MemberStatus memberStatus,
     Role role
 ) {
     public static MemberResponseDto from(Member member) {
@@ -31,7 +31,7 @@ public record MemberResponseDto(
                 member.getUsername(),
                 member.getNickname(),
                 member.getProfilePath(),
-                member.getStatus(),
+                member.getMemberStatus(),
                 member.getRole()
         );
     }

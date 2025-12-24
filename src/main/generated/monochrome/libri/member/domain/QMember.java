@@ -27,6 +27,8 @@ public class QMember extends EntityPathBase<Member> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final EnumPath<MemberStatus> memberStatus = createEnum("memberStatus", MemberStatus.class);
+
     public final StringPath nickname = createString("nickname");
 
     public final StringPath passwordHash = createString("passwordHash");
@@ -40,8 +42,6 @@ public class QMember extends EntityPathBase<Member> {
     public final StringPath providerUserId = createString("providerUserId");
 
     public final EnumPath<Role> role = createEnum("role", Role.class);
-
-    public final EnumPath<Status> status = createEnum("status", Status.class);
 
     public final StringPath username = createString("username");
 
