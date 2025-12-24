@@ -1,5 +1,5 @@
 package monochrome.libri.member.domain;
 
-public enum Status {
+public enum MemberStatus {
     GUEST, ACTIVE, INACTIVE, DELETE
 }

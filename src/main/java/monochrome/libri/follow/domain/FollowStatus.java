@@ -1,5 +1,5 @@
 package monochrome.libri.follow.domain;
 
-public enum Status {
+public enum FollowStatus {
     FOLLOW, UNFOLLOW
 }
