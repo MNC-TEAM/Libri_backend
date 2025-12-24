@@ -4,9 +4,9 @@ import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.domain.Role;
 import monochrome.libri.member.domain.SignType;
-import monochrome.libri.member.domain.Status;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.MemberCreateRequestDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
                 .nickname(request.nickname())
                 .passwordHash(passwordHashService.hashPassword(request.rawPassword()))
                 .profilePath(null)
-                .status(Status.ACTIVE)
+                .memberStatus(MemberStatus.ACTIVE)
                 .role(Role.USER)
                 .build();
 
@@ -73,7 +73,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(()-> new LibriException(ErrorCode.INVALID_LOGIN));
 
         // 탈퇴 체크
-        if(member.getStatus() == Status.DELETE) {
+        if(member.getMemberStatus() == MemberStatus.DELETE) {
             throw new LibriException(ErrorCode.MEMBER_WITHDRAWN);
         }
 

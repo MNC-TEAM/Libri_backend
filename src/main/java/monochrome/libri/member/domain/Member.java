@@ -2,7 +2,6 @@ package monochrome.libri.member.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 
 @Entity
 @Getter
@@ -38,7 +37,7 @@ public class Member {
 
     // 상태 필드
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private MemberStatus memberStatus;
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -65,6 +64,6 @@ public class Member {
     }
 
     public void withdraw() {
-        this.status = Status.DELETE;
+        this.memberStatus = MemberStatus.DELETE;
     }
 }

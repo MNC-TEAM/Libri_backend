@@ -19,7 +19,13 @@ public enum ErrorCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "존재하지 않는 회원입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "M002", "이미 가입된 이메일입니다."),
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "M003", "이메일 또는 비밀번호가 올바르지 않습니다."),
-    MEMBER_WITHDRAWN(HttpStatus.BAD_REQUEST, "M004", "탈퇴한 회원입니다.");
+    MEMBER_WITHDRAWN(HttpStatus.BAD_REQUEST, "M004", "탈퇴한 회원입니다."),
+
+    // 팔로우
+    EXIST_FOLLOW_RELATION(HttpStatus.CONFLICT, "F001", "이미 팔로우한 회원입니다."),
+    SELF_FOLLOW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "F002", "자기 자신은 팔로우할 수 없습니다."),
+    FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "F003", "팔로우 관계를 찾을 수 없습니다."),
+    ALREADY_UNFOLLOWED(HttpStatus.BAD_REQUEST, "F004", "이미 언팔로우한 상태입니다.")
     ;
 
     private final HttpStatus httpStatus;
