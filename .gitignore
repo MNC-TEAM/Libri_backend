@@ -5,6 +5,9 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+### env files ###
+.env.local-dev
+
 ### STS ###
 .apt_generated
 .classpath
