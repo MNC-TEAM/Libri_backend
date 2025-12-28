@@ -3,25 +3,26 @@ spring:
     name: libri
 
   datasource:
-    url: jdbc:mysql://localhost:3306/libri?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
-    username: root            # 실제 계정
-    password: 1234    # 실제 비밀번호
     driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
       pool-name: Hikari-Libri
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
   jpa:
-    hibernate:
-      ddl-auto: update   # 개발용
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
-        # 굳이 명시하려면 ↓ (보통은 자동감지)
-        # dialect: org.hibernate.dialect.MySQLDialect
 
-logging:
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.type.descriptor.sql: trace
+server:
+  port: ${SERVER_PORT:8080}
