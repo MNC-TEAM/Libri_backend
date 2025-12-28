@@ -20,7 +20,7 @@ import monochrome.libri.member.domain.SignType;
  * @param profilePath
  * @param role
  */
-public record MemberCreateRequestDto(
+public record SocialSignUpRequestDto(
         @NotNull
         SignType provider,
         @NotBlank
