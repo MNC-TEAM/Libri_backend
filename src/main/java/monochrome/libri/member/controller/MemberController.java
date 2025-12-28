@@ -1,9 +1,6 @@
 package monochrome.libri.member.controller;
 
-import jakarta.validation.Valid;
 import monochrome.libri.global.response.ApiResponse;
-import monochrome.libri.member.dto.request.MemberCreateRequestDto;
-import monochrome.libri.member.dto.response.MemberResponseDto;
 import monochrome.libri.member.service.MemberService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

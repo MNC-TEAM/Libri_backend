@@ -11,11 +11,11 @@ public interface AuthRepository extends JpaRepository<Member, Long> {
     /**
      * 이메일 중복 체크
      */
-    boolean existsByPrimaryEmail(String primaryEmail);
+    boolean existsByEmail(String email);
 
     /**
      * 이메일로 회원 조회
      */
-    Optional<Member> findByPrimaryEmail(String primaryEmail);
+    Optional<Member> findByEmail(String email);
 
 }

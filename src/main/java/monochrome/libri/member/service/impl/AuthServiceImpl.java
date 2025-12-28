@@ -8,8 +8,9 @@ import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.domain.Role;
 import monochrome.libri.member.domain.SignType;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
-import monochrome.libri.member.dto.request.MemberCreateRequestDto;
+import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
+import monochrome.libri.member.dto.response.SignUpResponseDto;
 import monochrome.libri.member.repository.AuthRepository;
 import monochrome.libri.member.service.AuthService;
 import monochrome.libri.member.service.MemberService;
@@ -33,32 +34,44 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 이메일 회원가입
      */
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private SignUpResponseDto saveOrThrowDuplicateEmail(Member member) {
+        try {
+            return SignUpResponseDto.from(authRepository.save(member));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new LibriException(ErrorCode.EMAIL_ALREADY_EXISTS);
+        }
+    }
+
     @Override
     @Transactional
-    public MemberResponseDto signupByEmail(MemberCreateRequestDto request) {
+    //TODO: 이메일 인증 도입 시점에 emailVerified 처리 로직 추가 필요
+    public SignUpResponseDto signupByEmail(EmailSignUpRequestDto request) {
 
-        if(authRepository.existsByPrimaryEmail(request.primaryEmail())) {
+        String email = normalizeEmail(request.email());
+
+        if(authRepository.existsByEmail(email)) {
             throw new LibriException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
         Member member = Member.builder()
                 .provider(SignType.EMAIL)
-                .providerUserId(request.providerUserId())
-                .primaryEmail(request.primaryEmail())
-                .emailVerified(false)
-                .emailFromProvider(null)
-                .emailVerifiedFromProvider(null)
-                .username(request.username())
+                .providerUserId(null)                 // 이메일 가입은 소셜 식별자 없음
+                .email(email)
+                .emailVerified(false)                 // 이메일 인증 도입 전이면 false 고정
+
                 .nickname(request.nickname())
                 .passwordHash(passwordHashService.hashPassword(request.rawPassword()))
-                .profilePath(null)
+                .profilePath(request.profilePath())
+
                 .memberStatus(MemberStatus.ACTIVE)
                 .role(Role.USER)
                 .build();
 
-        Member saved = authRepository.save(member);
-
-        return MemberResponseDto.from(saved);
+        return saveOrThrowDuplicateEmail(member);
     }
 
     /**
@@ -67,22 +80,28 @@ public class AuthServiceImpl implements AuthService {
      */
     @Override
     public MemberResponseDto loginByEmail(EmailLoginRequestDto request) {
+
+        String email = normalizeEmail(request.email());
         
         //회원 조회
-        Member member = authRepository.findByPrimaryEmail(request.email())
+        Member member = authRepository.findByEmail(email)
                 .orElseThrow(()-> new LibriException(ErrorCode.INVALID_LOGIN));
 
         // 탈퇴 체크
         if(member.getMemberStatus() == MemberStatus.DELETE) {
-            throw new LibriException(ErrorCode.MEMBER_WITHDRAWN);
-        }
-
-        // 비밀번호 체크
-        if(!passwordHashService.matches(request.password(), member.getPasswordHash())) {
             throw new LibriException(ErrorCode.INVALID_LOGIN);
         }
 
-        //TODO: 토큰이 정해지면 그 토큰 저장(아마 JWT를 쓰되 Refresh를 길게 가져갈듯)
+        // 소셜 계정 방어
+        if (member.getPasswordHash() == null) {
+            throw new LibriException(ErrorCode.INVALID_LOGIN);
+        }
+
+        // 비밀번호 체크
+        boolean isPasswordMatch = passwordHashService.matches(request.rawPassword(), member.getPasswordHash());
+        if(!isPasswordMatch) {
+            throw new LibriException(ErrorCode.INVALID_LOGIN);
+        }
 
         return MemberResponseDto.from(member);
     }

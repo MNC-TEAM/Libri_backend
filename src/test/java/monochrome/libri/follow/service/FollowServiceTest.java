@@ -37,9 +37,7 @@ class FollowServiceTest {
         return Member.builder()
                 .provider(SignType.EMAIL)
                 .providerUserId("providerUserId" + id)
-                .primaryEmail("email" + id + "@example.com")
                 .emailVerified(false)
-                .emailFromProvider(null)
                 .emailVerifiedFromProvider(null)
                 .username("username" + id)
                 .nickname("nickname" + id)
@@ -106,7 +104,7 @@ class FollowServiceTest {
 
         @Test
         @DisplayName("신규 관계면 팔로우 관계를 생성하고 followStatus=FOLLOW로 저장한다.")
-        void create_success_createsFollow_whenNewRelation() {
+        void follow_success_createsFollow_whenNewRelation() {
             // given
             long followerId = 1L;
             long followingId = 2L;

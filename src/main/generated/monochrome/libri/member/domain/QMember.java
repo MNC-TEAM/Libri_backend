@@ -19,7 +19,7 @@ public class QMember extends EntityPathBase<Member> {
 
     public static final QMember member = new QMember("member1");
 
-    public final StringPath emailFromProvider = createString("emailFromProvider");
+    public final StringPath email = createString("email");
 
     public final BooleanPath emailVerified = createBoolean("emailVerified");
 
@@ -32,8 +32,6 @@ public class QMember extends EntityPathBase<Member> {
     public final StringPath nickname = createString("nickname");
 
     public final StringPath passwordHash = createString("passwordHash");
-
-    public final StringPath primaryEmail = createString("primaryEmail");
 
     public final StringPath profilePath = createString("profilePath");
 

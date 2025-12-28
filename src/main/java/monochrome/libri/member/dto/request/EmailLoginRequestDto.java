@@ -8,6 +8,6 @@ public record EmailLoginRequestDto(
         @NotBlank
         String email,
         @NotBlank
-        String password
+        String rawPassword
 ) {
 }

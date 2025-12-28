@@ -3,8 +3,10 @@ package monochrome.libri.member.controller;
 import jakarta.validation.Valid;
 import monochrome.libri.global.response.ApiResponse;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
-import monochrome.libri.member.dto.request.MemberCreateRequestDto;
+import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
+import monochrome.libri.member.dto.request.SocialSignUpRequestDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
+import monochrome.libri.member.dto.response.SignUpResponseDto;
 import monochrome.libri.member.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +26,10 @@ public class AuthController {
      * POST /api/v1/auth/signup/email
      */
     @PostMapping("/signup/email")
-    public ResponseEntity<ApiResponse<MemberResponseDto>> signupByEmail(
-            @Valid @RequestBody MemberCreateRequestDto request
+    public ResponseEntity<ApiResponse<SignUpResponseDto>> signupByEmail(
+            @Valid @RequestBody EmailSignUpRequestDto request
     ) {
-        MemberResponseDto response = authService.signupByEmail(request);
+        SignUpResponseDto response = authService.signupByEmail(request);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
@@ -35,7 +37,7 @@ public class AuthController {
      * 이메일 로그인
      * POST /api/v1/auth/login/email
      */
-    @PostMapping("/login/email")
+    @PostMapping("/signin/email")
     public ResponseEntity<ApiResponse<MemberResponseDto>> loginByEmail(
             @Valid @RequestBody EmailLoginRequestDto request
     ) {
