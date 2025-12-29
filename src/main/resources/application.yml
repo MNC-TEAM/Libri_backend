@@ -29,5 +29,5 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  access-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:60}
+  access-exp-seconds: ${JWT_ACCESS_EXPIRATION_SECONDS:60}
   issuer: libri
