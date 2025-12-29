@@ -1,4 +1,4 @@
-package monochrome.libri.global.security;
+package monochrome.libri.global.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -13,7 +13,6 @@ import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
 
 @Component
 public class JwtTokenProvider {
@@ -24,9 +23,9 @@ public class JwtTokenProvider {
     private final Clock clock;
 
     public JwtTokenProvider(
-            @Value("${jwt.secret") String key,
-            @Value("${jwt.access-exp-seconds") long accessExpMs,
-            @Value("${jwt.issuer") String issuer,
+            @Value("${jwt.secret}") String key,
+            @Value("${jwt.access-exp-seconds}") long accessExpMs,
+            @Value("${jwt.issuer}") String issuer,
             Clock clock
     ) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(key));
@@ -35,7 +34,7 @@ public class JwtTokenProvider {
         this.clock = clock;
     }
 
-    public String createAccessToken(long memberId, String role) {
+    public String createAccessToken(long memberId) {
         Instant now = clock.instant();
         Instant exp = now.plusMillis(accessExpMs);
 
@@ -44,7 +43,6 @@ public class JwtTokenProvider {
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .subject(String.valueOf(memberId))          // 대표 식별자
-                .claims(Map.of("role", role))           // 추가 정보
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
@@ -52,7 +50,7 @@ public class JwtTokenProvider {
     public Jws<Claims> parse(String token) {
         return Jwts.parser()
                 .verifyWith(key)
-                .requireId(issuer)
+                .requireIssuer(issuer)
                 .build()
                 .parseSignedClaims(token);
     }
@@ -61,7 +59,7 @@ public class JwtTokenProvider {
         try {
             parse(token);
             return true;
-        } catch(JwtException | IllegalArgumentException e) {
+        } catch(JwtException | IllegalArgumentException e) {                // JWTException: 파싱 오류, 만료 등 모든 JWT 관련 예외의 부모 클래스, IllegalArgumentException: 토큰이 null or 빈 문자열인 경우 발생
             return false;
         }
     }
@@ -69,10 +67,4 @@ public class JwtTokenProvider {
     public long getMemberId(String token) {
         return Long.parseLong(parse(token).getPayload().getSubject());
     }
-
-    public String getRole(String token) {
-        Object role = parse(token).getPayload().get("role");
-        return role == null ? null : String.valueOf(role);
-    }
-
 }
