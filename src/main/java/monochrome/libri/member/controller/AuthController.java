@@ -48,7 +48,7 @@ public class AuthController {
         MemberResponseDto memberResponse = authService.loginByEmail(request);
         String token = jwtTokenService.issueAccessToken(memberResponse.id());
 
-        LoginResponseDto response = LoginResponseDto.of(token, memberResponse);
+        LoginResponseDto response = LoginResponseDto.of("Bearer", token, memberResponse);
 
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
