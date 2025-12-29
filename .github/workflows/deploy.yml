@@ -85,11 +85,11 @@ jobs:
             if [ "$BASE_BRANCH" = "main" ]; then
               export APP_PROD_TAG=prod-latest
               docker compose pull app-prod
-              docker compose up -d --no-deps app-prod
+              docker compose up -d --no-deps --force-recreate app-prod
             else
               export APP_DEV_TAG=dev-latest
               docker compose pull app-dev
-              docker compose up -d --no-deps app-dev
+              docker compose up -d --no-deps --force-recreate app-dev
             fi
 
             docker image prune -f
