@@ -25,3 +25,5 @@ logging:
     org.hibernate.orm.sql.ast: WARN
     org.hibernate.orm.results: WARN
 
+server:
+  forward-headers-strategy: framework
