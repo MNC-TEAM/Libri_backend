@@ -6,6 +6,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import monochrome.libri.global.security.token.TokenIssueResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import javax.crypto.SecretKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
@@ -34,17 +36,21 @@ public class JwtTokenProvider {
         this.clock = clock;
     }
 
-    public String createAccessToken(long memberId) {
+    public TokenIssueResult createAccessToken(long memberId) {
         Instant now = clock.instant();
         Instant exp = now.plusMillis(accessExpMs);
+        String jti = UUID.randomUUID().toString();
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .issuer(issuer)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .subject(String.valueOf(memberId))          // 대표 식별자
+                .id(jti)
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
+
+        return new TokenIssueResult(token, exp, jti);
     }
 
     public Jws<Claims> parse(String token) {

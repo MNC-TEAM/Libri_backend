@@ -1,5 +1,6 @@
 package monochrome.libri.member.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
@@ -17,6 +18,7 @@ import monochrome.libri.member.service.MemberService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
@@ -38,6 +40,16 @@ public class AuthServiceImpl implements AuthService {
         return email == null ? null : email.trim().toLowerCase();
     }
 
+    // 최소 마스킹(로깅용)
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank()) return "-";
+        int at = email.indexOf('@');
+        if (at <= 1) return "***";
+        String local = email.substring(0, at);
+        String domain = email.substring(at); // includes '@'
+        return local.charAt(0) + "***" + local.charAt(local.length() - 1) + domain;
+    }
+
     private SignUpResponseDto saveOrThrowDuplicateEmail(Member member) {
         try {
             return SignUpResponseDto.from(authRepository.save(member));
@@ -52,8 +64,10 @@ public class AuthServiceImpl implements AuthService {
     public SignUpResponseDto signupByEmail(EmailSignUpRequestDto request) {
 
         String email = normalizeEmail(request.email());
+        String maskedEmail = maskEmail(email);
 
         if(authRepository.existsByEmail(email)) {
+            log.warn("auth.signup result=fail reason=duplicate_email email={}", maskedEmail);
             throw new LibriException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
 
@@ -71,6 +85,8 @@ public class AuthServiceImpl implements AuthService {
                 .role(Role.USER)
                 .build();
 
+        log.info("auth.signup result=success memberId={} email={}",member.getId(), maskedEmail);
+
         return saveOrThrowDuplicateEmail(member);
     }
 
@@ -82,10 +98,15 @@ public class AuthServiceImpl implements AuthService {
     public MemberResponseDto loginByEmail(EmailLoginRequestDto request) {
 
         String email = normalizeEmail(request.email());
+        String maskedEmail = maskEmail(email);
         
         //회원 조회
         Member member = authRepository.findByEmail(email)
-                .orElseThrow(()-> new LibriException(ErrorCode.INVALID_LOGIN));
+                .orElseThrow(()-> {
+                            log.warn("auth.login result=fail reason=invalid_login email={}", maskedEmail);
+                            return new LibriException(ErrorCode.INVALID_LOGIN);
+                        }
+                );
 
         // 탈퇴 체크
         if(member.getMemberStatus() == MemberStatus.DELETE) {
@@ -102,6 +123,8 @@ public class AuthServiceImpl implements AuthService {
         if(!isPasswordMatch) {
             throw new LibriException(ErrorCode.INVALID_LOGIN);
         }
+
+        log.info("auth.login result=success memberId={}", member.getId());
 
         return MemberResponseDto.from(member);
     }

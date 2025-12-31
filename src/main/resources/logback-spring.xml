@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- requestId가 있을 때만 "[rid=... ] " 출력, 없으면 아무것도 출력하지 않음 -->
+    <property name="RID_PART" value="%replace(%X{requestId}){'^(.+)$','[rid=$1] '}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================== dev ===================== -->
+    <springProfile name="dev">
+        <property name="LOG_PATTERN"
+                  value="%d{HH:mm:ss.SSS} %-5level [%thread{20}] %logger{36} - ${RID_PART}%msg%n"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="monochrome.libri" level="DEBUG"/>
+
+        <logger name="org.springframework.web" level="INFO"/>
+        <logger name="org.springframework.security" level="INFO"/>
+        <logger name="org.springframework.orm.jpa" level="INFO"/>
+        <logger name="org.springframework.boot.autoconfigure" level="INFO"/>
+
+        <logger name="org.hibernate.orm.sql.ast" level="WARN"/>
+        <logger name="org.hibernate.orm.results" level="WARN"/>
+    </springProfile>
+
+    <!-- ===================== prod ===================== -->
+    <springProfile name="prod">
+        <property name="LOG_PATTERN"
+                  value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - ${RID_PART}%msg%n"/>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="monochrome.libri" level="INFO"/>
+        <logger name="org.springframework" level="INFO"/>
+        <logger name="org.hibernate.orm.sql.ast" level="WARN"/>
+        <logger name="org.hibernate.orm.results" level="WARN"/>
+    </springProfile>
+
+</configuration>

@@ -1,5 +1,6 @@
 package monochrome.libri.follow.service;
 
+import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.follow.domain.Follow;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.dto.MemberSummaryDto;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class FollowServiceImpl implements FollowService{
@@ -63,6 +65,8 @@ public class FollowServiceImpl implements FollowService{
                         this::reactivateOrThrow,
                         () -> createNewFollow(follower, following)
                 );
+
+        log.info("follow.created followerId={} followingId={}", followerMemberId, followingMemberId);
     }
 
     @Override
@@ -81,6 +85,8 @@ public class FollowServiceImpl implements FollowService{
         }
 
         relation.unfollow();
+
+        log.info("follow.deleted followerId={} followingId={}", followerMemberId, followingMemberId);
     }
 
     @Override
