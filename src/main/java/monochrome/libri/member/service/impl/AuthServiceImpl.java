@@ -76,11 +76,9 @@ public class AuthServiceImpl implements AuthService {
                 .providerUserId(null)                 // 이메일 가입은 소셜 식별자 없음
                 .email(email)
                 .emailVerified(false)                 // 이메일 인증 도입 전이면 false 고정
-
                 .nickname(request.nickname())
                 .passwordHash(passwordHashService.hashPassword(request.rawPassword()))
                 .profilePath(request.profilePath())
-
                 .memberStatus(MemberStatus.ACTIVE)
                 .role(Role.USER)
                 .build();
