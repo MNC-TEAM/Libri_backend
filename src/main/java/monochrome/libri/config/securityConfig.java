@@ -1,5 +1,6 @@
 package monochrome.libri.config;
 
+import monochrome.libri.common.logging.RequestIdMdcFilter;
 import monochrome.libri.global.security.jwt.JwtAuthenticationFilter;
 import monochrome.libri.global.security.jwt.JwtTokenProvider;
 import monochrome.libri.global.security.web.CustomAccessDeniedHandler;
@@ -17,12 +18,25 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class securityConfig {
 
     @Bean
+    public RequestIdMdcFilter requestIdMdcFilter() {
+        return new RequestIdMdcFilter();
+    }
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter(
+            JwtTokenProvider jwtTokenProvider,
+            UserDetailsService userDetailsService
+    ) {
+        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtTokenProvider jwtTokenProvider,                      // JWT 토큰 생성/검증 빈이 주입됨
-            UserDetailsService userDetailsService,                  // customUserDetailsService 빈이 주입됨
             CustomAuthenticationEntryPoint entryPoint,              // 인증이 필요한 리소스에 인증되지 않은 사용자가 접근할 때 처리(401)
-            CustomAccessDeniedHandler accessDeniedHandler           // 인증된 사용자가 권한이 없는 리소스에 접근할 때 처리(403)
+            CustomAccessDeniedHandler accessDeniedHandler,          // 인증된 사용자가 권한이 없는 리소스에 접근할 때 처리(403)
+            RequestIdMdcFilter requestIdMdcFilter,                  // 요청 ID 필터
+            JwtAuthenticationFilter jwtAuthenticationFilter         // JWT 인증 필터
             ) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -38,9 +52,14 @@ public class securityConfig {
                 )
                 // UsernamePasswordAuthenticationFilter 전에 JWT 필터를 추가
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService),
+                        jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
-                );
+                )
+                .addFilterBefore(
+                        requestIdMdcFilter,
+                        JwtAuthenticationFilter.class
+                )
+        ;
 
 
         return http.build();

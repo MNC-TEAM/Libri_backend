@@ -9,7 +9,19 @@ spring:
 
 logging:
   level:
+    root: INFO          # dev라도 root는 INFO 추천 (스프링 내부 DEBUG 폭발 방지)
+    monochrome.libri: DEBUG
+
     org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace
-    org.springframework.jdbc.datasource: INFO
-    com.zaxxer.hikari: INFO
+    org.hibernate.orm.jdbc.bind: INFO
+
+    # 스프링/시큐리티/트랜잭션 소음 억제 (요청 바디 노출 방지 포함)
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.springframework.orm.jpa: INFO
+    org.springframework.boot.autoconfigure: INFO
+
+    # Hibernate 내부 AST/결과 그래프 소음 억제
+    org.hibernate.orm.sql.ast: WARN
+    org.hibernate.orm.results: WARN
+
