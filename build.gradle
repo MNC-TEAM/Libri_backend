@@ -54,6 +54,9 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 
+	// springdoc-openapi (Spring Boot 3.x = jakarta)
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+
 	// Querydsl (Spring Boot 3.x = jakarta)
 	implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
 	annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"

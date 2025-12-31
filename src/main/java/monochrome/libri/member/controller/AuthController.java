@@ -1,8 +1,10 @@
 package monochrome.libri.member.controller;
 
 import jakarta.validation.Valid;
+import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.response.ApiResponse;
 import monochrome.libri.global.security.token.JwtTokenService;
+import monochrome.libri.global.swagger.ApiErrorCodes;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
 import monochrome.libri.member.dto.request.SocialSignUpRequestDto;
@@ -29,6 +31,9 @@ public class AuthController {
      * 이메일 회원가입
      * POST /api/v1/auth/signup/email
      */
+    @ApiErrorCodes({
+            ErrorCode.EMAIL_ALREADY_EXISTS,
+    })
     @PostMapping("/signup/email")
     public ResponseEntity<ApiResponse<SignUpResponseDto>> signupByEmail(
             @Valid @RequestBody EmailSignUpRequestDto request
@@ -41,6 +46,9 @@ public class AuthController {
      * 이메일 로그인
      * POST /api/v1/auth/login/email
      */
+    @ApiErrorCodes({
+            ErrorCode.INVALID_LOGIN
+    })
     @PostMapping("/login/email")
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginByEmail(
             @Valid @RequestBody EmailLoginRequestDto request
