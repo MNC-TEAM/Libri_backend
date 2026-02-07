@@ -2,6 +2,7 @@ package monochrome.libri.follow.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import monochrome.libri.global.domain.AuditableEntity;
 import monochrome.libri.member.domain.Member;
 
 @Entity
@@ -9,7 +10,7 @@ import monochrome.libri.member.domain.Member;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Follow {
+public class Follow extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_follow")

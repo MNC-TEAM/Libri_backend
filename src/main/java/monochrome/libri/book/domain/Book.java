@@ -2,15 +2,17 @@ package monochrome.libri.book.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import monochrome.libri.global.domain.AuditableEntity;
 
 import java.time.LocalDate;
+import java.util.regex.Pattern;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Book {
+public class Book extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "book_id")
@@ -40,4 +42,14 @@ public class Book {
 
     @Column(length = 255)
     String coverImageUrl;
+
+    private static final Pattern ISBN_CLEANUP = Pattern.compile("[\\s-]");
+
+    @PrePersist
+    @PreUpdate
+    void normalizeIsbn() {
+        if (isbn != null) {
+            isbn = ISBN_CLEANUP.matcher(isbn).replaceAll("");
+        }
+    }
 }

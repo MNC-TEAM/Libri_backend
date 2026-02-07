@@ -1,6 +1,8 @@
 package monochrome.libri.book.service;
 
 import monochrome.libri.book.dto.response.BookResponseDto;
+import monochrome.libri.book.dto.response.BookDetailResponseDto;
+import monochrome.libri.book.dto.request.BookDirectCreateRequestDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
@@ -11,4 +13,7 @@ public interface BookService {
      */
 
     Slice<BookResponseDto> searchBooks(String keyword, Pageable pageable);
+
+    BookDetailResponseDto getBookDetail(long bookId, Long memberId);
+    void createBookDirect(long memberId, BookDirectCreateRequestDto request);
 }
