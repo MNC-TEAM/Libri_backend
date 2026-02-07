@@ -2,6 +2,7 @@ package monochrome.libri.member.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import monochrome.libri.global.domain.AuditableEntity;
 
 @Entity
 @Getter
@@ -15,7 +16,7 @@ import lombok.*;
                 @UniqueConstraint(name = "uk_member_provider_user", columnNames = {"provider", "providerUserId"})           // provider + providerUserId unique (소셜 로그인 식별자)
         }
 )
-public class Member {
+public class Member extends AuditableEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")

@@ -6,7 +6,11 @@ build/
 !**/src/test/**/build/
 
 ### env files ###
+.env
 .env.local-dev
+
+### local scripts ###
+run.sh
 
 ### STS ###
 .apt_generated

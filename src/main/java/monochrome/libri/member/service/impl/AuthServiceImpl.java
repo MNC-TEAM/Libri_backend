@@ -11,7 +11,6 @@ import monochrome.libri.member.domain.SignType;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
-import monochrome.libri.member.dto.response.SignUpResponseDto;
 import monochrome.libri.member.repository.AuthRepository;
 import monochrome.libri.member.service.AuthService;
 import monochrome.libri.member.service.MemberService;
@@ -50,9 +49,9 @@ public class AuthServiceImpl implements AuthService {
         return local.charAt(0) + "***" + local.charAt(local.length() - 1) + domain;
     }
 
-    private SignUpResponseDto saveOrThrowDuplicateEmail(Member member) {
+    private void saveOrThrowDuplicateEmail(Member member) {
         try {
-            return SignUpResponseDto.from(authRepository.save(member));
+            authRepository.save(member);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             throw new LibriException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -61,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     //TODO: 이메일 인증 도입 시점에 emailVerified 처리 로직 추가 필요
-    public SignUpResponseDto signupByEmail(EmailSignUpRequestDto request) {
+    public void signupByEmail(EmailSignUpRequestDto request) {
 
         String email = normalizeEmail(request.email());
         String maskedEmail = maskEmail(email);
@@ -85,7 +84,7 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("auth.signup result=success memberId={} email={}",member.getId(), maskedEmail);
 
-        return saveOrThrowDuplicateEmail(member);
+        saveOrThrowDuplicateEmail(member);
     }
 
     /**

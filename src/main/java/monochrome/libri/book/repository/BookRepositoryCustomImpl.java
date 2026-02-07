@@ -26,9 +26,6 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom{
         QBook b = QBook.book;
 
         String keyword = (textKeyword == null) ? "" : textKeyword.trim();
-        if(keyword.isBlank()) {
-            return new SliceImpl<>(List.of(), pageable, false);
-        }
 
         // title, author, publisher 포함 검색(대소문자 무시)
         BooleanExpression condition =

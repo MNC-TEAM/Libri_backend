@@ -10,8 +10,9 @@ import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
 import monochrome.libri.member.dto.request.SocialSignUpRequestDto;
 import monochrome.libri.member.dto.response.LoginResponseDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
-import monochrome.libri.member.dto.response.SignUpResponseDto;
 import monochrome.libri.member.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,11 +36,15 @@ public class AuthController {
             ErrorCode.EMAIL_ALREADY_EXISTS,
     })
     @PostMapping("/signup/email")
-    public ResponseEntity<ApiResponse<SignUpResponseDto>> signupByEmail(
+    @Operation(
+            summary = "이메일 회원가입",
+            description = "이메일과 비밀번호로 회원을 생성합니다."
+    )
+    public ResponseEntity<ApiResponse<Void>> signupByEmail(
             @Valid @RequestBody EmailSignUpRequestDto request
     ) {
-        SignUpResponseDto response = authService.signupByEmail(request);
-        return ResponseEntity.ok(ApiResponse.ok(response));
+        authService.signupByEmail(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok());
     }
 
     /**
@@ -50,6 +55,10 @@ public class AuthController {
             ErrorCode.INVALID_LOGIN
     })
     @PostMapping("/login/email")
+    @Operation(
+            summary = "이메일 로그인",
+            description = "이메일 로그인 후 액세스 토큰을 발급합니다."
+    )
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginByEmail(
             @Valid @RequestBody EmailLoginRequestDto request
     ) {
@@ -66,6 +75,10 @@ public class AuthController {
      * POST /api/v1/auth/logout
      */
     @PostMapping("/logout")
+    @Operation(
+            summary = "로그아웃",
+            description = "로그아웃을 처리합니다. (현재 토큰 무효화 로직은 미구현)"
+    )
     public ResponseEntity<ApiResponse<Void>> logout() {
         authService.logout();
         return ResponseEntity.ok(ApiResponse.ok());

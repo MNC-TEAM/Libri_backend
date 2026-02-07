@@ -4,11 +4,19 @@
     <!-- requestId가 있을 때만 "[rid=... ] " 출력, 없으면 아무것도 출력하지 않음 -->
     <property name="RID_PART" value="%replace(%X{requestId}){'^(.+)$','[rid=$1] '}"/>
 
+    <!-- fallback for when no spring profile is active -->
+    <property name="LOG_PATTERN"
+              value="%d{HH:mm:ss.SSS} %-5level [%thread{20}] %logger{36} - ${RID_PART}%msg%n"/>
+
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
 
     <!-- ===================== dev ===================== -->
     <springProfile name="dev">
