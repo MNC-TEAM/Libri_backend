@@ -49,7 +49,7 @@ public class ReviewController {
     )
     @ApiErrorCodes({
             ErrorCode.BOOK_NOT_FOUND,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<ReviewSliceWithStatsResponseDto>> getReviewsByBook(
             @PathVariable long bookId,
@@ -59,7 +59,7 @@ public class ReviewController {
             @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
         Pageable pageable = PageRequest.of(page, size);
         ReviewSliceWithStatsResponseDto response = reviewService.getReviewsByBook(bookId, pageable);
@@ -137,7 +137,7 @@ public class ReviewController {
     @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<ReviewSliceResponseDto>> getMyReviews(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -147,7 +147,7 @@ public class ReviewController {
             @RequestParam(defaultValue = "" + DEFAULT_PAGE_SIZE) int size
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
         Pageable pageable = PageRequest.of(page, size);

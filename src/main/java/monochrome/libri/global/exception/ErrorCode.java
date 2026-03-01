@@ -10,6 +10,10 @@ public enum ErrorCode {
     // 공통
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "서버 에러가 발생했습니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "잘못된 요청입니다."),
+    CONTENT_TOO_LONG(HttpStatus.BAD_REQUEST, "C003", "입력 본문 길이가 허용 범위를 초과했습니다."),
+    PAGINATION_INVALID(HttpStatus.BAD_REQUEST, "C004", "페이지 요청 값이 올바르지 않습니다."),
+    REQUEST_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "C005", "요청 형식이 올바르지 않습니다."),
+    ENUM_VALUE_INVALID(HttpStatus.BAD_REQUEST, "C006", "허용되지 않은 값이 포함되어 있습니다."),
 
     // 인증/인가 관련
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "A001", "인증에 실패했습니다."),
@@ -20,11 +24,18 @@ public enum ErrorCode {
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "M002", "이미 가입된 이메일입니다."),
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "M003", "이메일 또는 비밀번호가 올바르지 않습니다."),
     MEMBER_WITHDRAWN(HttpStatus.BAD_REQUEST, "M004", "탈퇴한 회원입니다."),
+    PASSWORD_TOO_SHORT(HttpStatus.BAD_REQUEST, "M005", "비밀번호 길이가 최소 길이보다 짧습니다."),
+    PASSWORD_TOO_LONG(HttpStatus.BAD_REQUEST, "M006", "비밀번호 길이가 최대 길이를 초과했습니다."),
+    EMAIL_FORMAT_INVALID(HttpStatus.BAD_REQUEST, "M007", "이메일 형식이 올바르지 않습니다."),
+    NICKNAME_LENGTH_INVALID(HttpStatus.BAD_REQUEST, "M008", "닉네임 길이가 허용 범위를 벗어났습니다."),
     BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "존재하지 않는 도서입니다."),
+    BOOK_PUBLISHER_TOO_LONG(HttpStatus.BAD_REQUEST, "B002", "출판사 길이가 허용 범위를 초과했습니다."),
     SHELF_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "책장 정보를 찾을 수 없습니다."),
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "노트를 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "N002", "댓글을 찾을 수 없습니다."),
+    NOTE_CONTENT_TOO_LONG(HttpStatus.BAD_REQUEST, "N003", "노트 본문 길이가 허용 범위를 초과했습니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
+    REVIEW_RATING_OUT_OF_RANGE(HttpStatus.BAD_REQUEST, "R002", "리뷰 평점은 1~5 범위여야 합니다."),
 
     // 팔로우
     EXIST_FOLLOW_RELATION(HttpStatus.CONFLICT, "F001", "이미 팔로우한 회원입니다."),

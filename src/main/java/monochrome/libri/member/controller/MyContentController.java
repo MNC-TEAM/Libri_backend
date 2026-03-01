@@ -50,7 +50,7 @@ public class MyContentController {
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<NoteBookmarkListResponseDto>> getBookmarkedNotes(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -73,7 +73,7 @@ public class MyContentController {
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<ReviewBookmarkListResponseDto>> getBookmarkedReviews(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -96,7 +96,7 @@ public class MyContentController {
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<MyReviewListResponseDto>> getMyReviews(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -119,7 +119,7 @@ public class MyContentController {
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<MyCommentListResponseDto>> getMyComments(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -137,7 +137,7 @@ public class MyContentController {
 
     private void validatePage(int page, int size) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
     }
 }

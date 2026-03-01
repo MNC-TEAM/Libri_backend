@@ -40,7 +40,7 @@ public class SearchController {
     @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<RecentSearchListResponseDto>> getRecentSearches(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -50,7 +50,7 @@ public class SearchController {
             @RequestParam(defaultValue = "20") int size
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
         Pageable pageable = PageRequest.of(page, size);

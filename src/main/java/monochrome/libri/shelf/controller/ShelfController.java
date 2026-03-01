@@ -111,7 +111,7 @@ public class ShelfController {
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.SHELF_NOT_FOUND,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<NoteSliceResponseDto>> getNotesByShelf(
             @PathVariable long shelfId,
@@ -122,7 +122,7 @@ public class ShelfController {
             @org.springframework.web.bind.annotation.RequestParam(defaultValue = "3") int size
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
         Pageable pageable = PageRequest.of(page, size);
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
@@ -166,7 +166,7 @@ public class ShelfController {
             @PathVariable long shelfId,
             @PathVariable long noteId,
             @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestBody NoteUpdateRequestDto request
+            @Valid @RequestBody NoteUpdateRequestDto request
     ) {
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
         NoteSummaryResponseDto response = noteService.updateNote(shelfId, noteId, memberId, request);

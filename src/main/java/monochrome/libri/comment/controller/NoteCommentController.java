@@ -44,7 +44,7 @@ public class NoteCommentController {
     @ApiErrorCodes({
             ErrorCode.NOTE_NOT_FOUND,
             ErrorCode.ACCESS_DENIED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<CommentSliceResponseDto>> getComments(
             @PathVariable long noteId,
@@ -55,7 +55,7 @@ public class NoteCommentController {
             @RequestParam(defaultValue = "20") int size
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
         Pageable pageable = PageRequest.of(page, size);
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();

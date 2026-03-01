@@ -41,7 +41,7 @@ public class NoteController {
     @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<NoteListResponseDto>> getNotes(
             @AuthenticationPrincipal UserPrincipal userPrincipal,
@@ -57,7 +57,7 @@ public class NoteController {
             @RequestParam(defaultValue = "latest") String sort
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
 
         Sort sortSpec = resolveSort(sort);

@@ -41,7 +41,7 @@ public class BookController {
             description = "키워드로 도서를 검색하고, 로그인 상태이면 검색어를 최근 검색 기록에 저장합니다."
     )
     @ApiErrorCodes({
-            ErrorCode.INVALID_INPUT_VALUE
+            ErrorCode.PAGINATION_INVALID
     })
     public ResponseEntity<ApiResponse<BookSliceResponseDto>> searchBooks(
             @AuthenticationPrincipal monochrome.libri.global.security.UserPrincipal userPrincipal,
@@ -53,7 +53,7 @@ public class BookController {
             @RequestParam(defaultValue = "20") int size
     ) {
         if (page < 0 || size <= 0) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new LibriException(ErrorCode.PAGINATION_INVALID);
         }
         Pageable pageable = PageRequest.of(page, size);
         var result = bookService.searchBooks(keyword, pageable);

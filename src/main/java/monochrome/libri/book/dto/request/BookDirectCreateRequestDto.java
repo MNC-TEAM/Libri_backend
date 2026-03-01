@@ -12,7 +12,7 @@ public record BookDirectCreateRequestDto(
         @NotBlank
         @Size(max = 25)
         String author,
-        @Size(max = 120)
+        @Size(max = 15)
         String publisher,
         @Size(max = 15)
         String isbn,
