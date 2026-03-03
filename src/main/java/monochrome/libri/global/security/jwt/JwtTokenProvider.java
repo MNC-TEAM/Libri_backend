@@ -20,25 +20,25 @@ import java.util.UUID;
 public class JwtTokenProvider {
 
     private final SecretKey key;
-    private final long accessExpMs;
+    private final long accessExpSeconds;
     private final String issuer;
     private final Clock clock;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String key,
-            @Value("${jwt.access-exp-seconds}") long accessExpMs,
+            @Value("${jwt.access-exp-seconds}") long accessExpSeconds,
             @Value("${jwt.issuer}") String issuer,
             Clock clock
     ) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(key));
-        this.accessExpMs = accessExpMs;
+        this.accessExpSeconds = accessExpSeconds;
         this.issuer = issuer;
         this.clock = clock;
     }
 
     public TokenIssueResult createAccessToken(long memberId) {
         Instant now = clock.instant();
-        Instant exp = now.plusMillis(accessExpMs);
+        Instant exp = now.plusSeconds(accessExpSeconds);
         String jti = UUID.randomUUID().toString();
 
         String token = Jwts.builder()
