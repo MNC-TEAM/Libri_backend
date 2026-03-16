@@ -1,7 +1,7 @@
 package monochrome.libri.search.dto.response;
 
 public record TrendingKeywordResponseDto(
-        String keyword,
+        TrendingBookSummaryResponseDto book,
         long count
 ) {
 }

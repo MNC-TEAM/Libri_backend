@@ -121,7 +121,7 @@ public class NoteCommentServiceImpl implements NoteCommentService {
     @Override
     public MyCommentListResponseDto getCommentsByMember(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return MyCommentListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
         Slice<NoteComment> slice = commentRepository.findByMemberIdOrderByCreatedDateDesc(memberId, pageable);
         List<MyCommentItemResponseDto> content = slice.getContent().stream()

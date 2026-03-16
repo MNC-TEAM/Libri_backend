@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
+import monochrome.libri.member.dto.request.RefreshTokenRequestDto;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.domain.Role;
@@ -127,8 +128,21 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public void logout() {
-        //TODO: 토큰 삭제
+    public void logout(String refreshToken) {
+        validateRefreshTokenText(refreshToken);
+    }
 
+    @Override
+    public void validateRefreshRequest(RefreshTokenRequestDto request) {
+        if (request == null) {
+            throw new LibriException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        validateRefreshTokenText(request.refreshToken());
+    }
+
+    private void validateRefreshTokenText(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new LibriException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
     }
 }

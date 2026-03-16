@@ -43,6 +43,7 @@ class MemberServiceImplTest {
                 "newnick",
                 "newpass",
                 "/new/profile",
+                true,
                 null,
                 null
         );
@@ -53,6 +54,7 @@ class MemberServiceImplTest {
         assertThat(updated.getUsername()).isEqualTo("newuser");
         assertThat(updated.getNickname()).isEqualTo("newnick");
         assertThat(updated.getProfilePath()).isEqualTo("/new/profile");
+        assertThat(updated.isPrivateAccount()).isTrue();
     }
 
     @Test
@@ -61,7 +63,7 @@ class MemberServiceImplTest {
 
         MemberUpdateRequestDto dto = new MemberUpdateRequestDto(
                 null, null, null, null,
-                null, null, null, null, null, null
+                null, null, null, null, null, null, null
         );
 
         assertThatThrownBy(() -> service.updateMember(1L, dto))

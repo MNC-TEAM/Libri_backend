@@ -32,6 +32,7 @@ public final class TestFixtures {
                 .username("user" + id)
                 .passwordHash("hashed" + id)
                 .profilePath("/profile/" + id)
+                .privateAccount(false)
                 .memberStatus(MemberStatus.ACTIVE)
                 .role(Role.USER)
                 .build();

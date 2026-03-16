@@ -7,6 +7,7 @@ import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
+import monochrome.libri.member.dto.request.RefreshTokenRequestDto;
 import monochrome.libri.member.repository.AuthRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -97,5 +98,19 @@ class AuthServiceImplTest {
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.nickname()).isEqualTo(member.getNickname());
+    }
+
+    @Test
+    void validateRefreshRequest_rejectsBlankToken() {
+        RefreshTokenRequestDto dto = new RefreshTokenRequestDto(" ");
+
+        assertThatThrownBy(() -> service.validateRefreshRequest(dto))
+                .isInstanceOf(LibriException.class);
+    }
+
+    @Test
+    void logout_rejectsBlankToken() {
+        assertThatThrownBy(() -> service.logout(" "))
+                .isInstanceOf(LibriException.class);
     }
 }

@@ -69,7 +69,7 @@ public class ReviewController {
     @PostMapping("/reviews")
     @Operation(
             summary = "리뷰 작성",
-            description = "도서에 대한 리뷰를 작성합니다."
+            description = "도서에 대한 리뷰를 작성합니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
     @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
@@ -90,7 +90,7 @@ public class ReviewController {
     @PatchMapping("/reviews/{reviewId}")
     @Operation(
             summary = "리뷰 수정",
-            description = "본인이 작성한 리뷰만 수정할 수 있습니다."
+            description = "본인이 작성한 리뷰만 수정할 수 있습니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
     @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
@@ -132,9 +132,8 @@ public class ReviewController {
     @GetMapping("/reviews/me")
     @Operation(
             summary = "내 리뷰 목록 조회",
-            description = "회원이 작성한 리뷰 목록을 페이지네이션으로 조회합니다."
+            description = "로그인 상태이면 회원이 작성한 리뷰 목록을 페이지네이션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
-    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.INVALID_INPUT_VALUE

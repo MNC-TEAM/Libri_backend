@@ -1,5 +1,6 @@
 package monochrome.libri.search.service.impl;
 
+import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
@@ -7,6 +8,7 @@ import monochrome.libri.member.service.MemberService;
 import monochrome.libri.search.domain.SearchKeyword;
 import monochrome.libri.search.dto.response.RecentSearchItemResponseDto;
 import monochrome.libri.search.dto.response.RecentSearchListResponseDto;
+import monochrome.libri.search.dto.response.TrendingBookSummaryResponseDto;
 import monochrome.libri.search.dto.response.TrendingKeywordListResponseDto;
 import monochrome.libri.search.dto.response.TrendingKeywordResponseDto;
 import monochrome.libri.search.repository.SearchKeywordRepository;
@@ -27,10 +29,16 @@ public class SearchServiceImpl implements SearchService {
 
     private final SearchKeywordRepository searchKeywordRepository;
     private final MemberService memberService;
+    private final BookRepository bookRepository;
 
-    public SearchServiceImpl(SearchKeywordRepository searchKeywordRepository, MemberService memberService) {
+    public SearchServiceImpl(
+            SearchKeywordRepository searchKeywordRepository,
+            MemberService memberService,
+            BookRepository bookRepository
+    ) {
         this.searchKeywordRepository = searchKeywordRepository;
         this.memberService = memberService;
+        this.bookRepository = bookRepository;
     }
 
     @Override
@@ -59,7 +67,7 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public RecentSearchListResponseDto getRecentSearches(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return RecentSearchListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
 
         Slice<SearchKeyword> slice = searchKeywordRepository.findByMemberIdOrderByCreatedDateDesc(memberId, pageable);
@@ -108,7 +116,17 @@ public class SearchServiceImpl implements SearchService {
         Pageable pageable = PageRequest.of(0, safeLimit);
         var rows = searchKeywordRepository.findTopKeywords(pageable);
         List<TrendingKeywordResponseDto> content = rows.stream()
-                .map(row -> new TrendingKeywordResponseDto(row.getKeyword(), row.getCount() == null ? 0L : row.getCount()))
+                .map(row -> {
+                    var books = bookRepository.searchByKeyword(row.getKeyword(), PageRequest.of(0, 1)).getContent();
+                    if (books.isEmpty()) {
+                        return null;
+                    }
+                    return new TrendingKeywordResponseDto(
+                            TrendingBookSummaryResponseDto.from(books.get(0)),
+                            row.getCount() == null ? 0L : row.getCount()
+                    );
+                })
+                .filter(java.util.Objects::nonNull)
                 .toList();
         return new TrendingKeywordListResponseDto(content);
     }

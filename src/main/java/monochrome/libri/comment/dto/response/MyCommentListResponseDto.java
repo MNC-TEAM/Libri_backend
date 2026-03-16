@@ -9,4 +9,7 @@ public record MyCommentListResponseDto(
         int page,
         int size
 ) {
+    public static MyCommentListResponseDto empty(int page, int size) {
+        return new MyCommentListResponseDto(0, List.of(), false, page, size);
+    }
 }

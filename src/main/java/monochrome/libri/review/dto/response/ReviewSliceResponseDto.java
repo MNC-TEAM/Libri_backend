@@ -8,4 +8,7 @@ public record ReviewSliceResponseDto(
         int page,
         int size
 ) {
+    public static ReviewSliceResponseDto empty(int page, int size) {
+        return new ReviewSliceResponseDto(List.of(), false, page, size);
+    }
 }

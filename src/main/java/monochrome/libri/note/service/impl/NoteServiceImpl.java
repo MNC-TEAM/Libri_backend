@@ -159,7 +159,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public NoteListResponseDto getNotesByMember(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return NoteListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
 
         Slice<Note> slice = noteRepository.findByMemberId(memberId, pageable);
@@ -240,7 +240,7 @@ public class NoteServiceImpl implements NoteService {
     @Override
     public NoteBookmarkListResponseDto getBookmarkedNotes(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return NoteBookmarkListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
         var slice = noteBookmarkRepository.findByMemberIdOrderByCreatedDateDesc(memberId, pageable);
         List<Note> notes = slice.getContent().stream().map(bookmark -> bookmark.getNote()).toList();

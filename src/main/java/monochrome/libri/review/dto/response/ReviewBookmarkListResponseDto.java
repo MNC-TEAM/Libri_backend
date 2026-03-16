@@ -9,4 +9,7 @@ public record ReviewBookmarkListResponseDto(
         int page,
         int size
 ) {
+    public static ReviewBookmarkListResponseDto empty(int page, int size) {
+        return new ReviewBookmarkListResponseDto(0, List.of(), false, page, size);
+    }
 }

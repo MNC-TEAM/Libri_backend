@@ -152,7 +152,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public ReviewSliceResponseDto getReviewsByMember(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return ReviewSliceResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
 
         Slice<Review> slice = reviewRepository.findByMemberIdAndStatusOrderByCreatedDateDesc(
@@ -203,7 +203,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public MyReviewListResponseDto getMyReviews(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return MyReviewListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
         Slice<Review> slice = reviewRepository.findByMemberIdAndStatusOrderByCreatedDateDesc(
                 memberId,
@@ -235,7 +235,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public ReviewBookmarkListResponseDto getBookmarkedReviews(long memberId, Pageable pageable) {
         if (memberId <= 0) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+            return ReviewBookmarkListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
         }
 
         var slice = reviewBookmarkRepository.findByMemberIdOrderByCreatedDateDesc(memberId, pageable);

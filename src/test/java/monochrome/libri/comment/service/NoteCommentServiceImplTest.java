@@ -104,6 +104,15 @@ class NoteCommentServiceImplTest {
     }
 
     @Test
+    void getCommentsByMember_returnsEmptyWhenUnauthenticated() {
+        var response = service.getCommentsByMember(0L, PageRequest.of(0, 10));
+
+        assertThat(response.totalCount()).isZero();
+        assertThat(response.content()).isEmpty();
+        assertThat(response.hasNext()).isFalse();
+    }
+
+    @Test
     void deleteComment_deniesNotOwner() {
         Member owner = TestFixtures.member(1L);
         Note note = TestFixtures.note(2L, TestFixtures.shelf(3L, owner, TestFixtures.book(4L, 100)), owner, false);

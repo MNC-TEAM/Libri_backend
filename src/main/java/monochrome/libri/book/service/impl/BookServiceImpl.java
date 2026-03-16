@@ -3,6 +3,7 @@ package monochrome.libri.book.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.book.domain.Book;
 import monochrome.libri.book.dto.request.BookDirectCreateRequestDto;
+import monochrome.libri.book.dto.request.BookDirectUpdateRequestDto;
 import monochrome.libri.book.dto.response.BookDetailResponseDto;
 import monochrome.libri.book.dto.response.BookResponseDto;
 import monochrome.libri.book.repository.BookRepository;
@@ -161,6 +162,7 @@ public class BookServiceImpl implements BookService {
                 .isbn(request.isbn())
                 .totalPage(request.totalPage() == null ? 0 : request.totalPage())
                 .coverImageUrl(request.coverUrl())
+                .registeredByMember(member)
                 .build();
 
         Book savedBook = bookRepository.save(book);
@@ -188,6 +190,36 @@ public class BookServiceImpl implements BookService {
                 .build();
 
         shelfRepository.save(shelf);
+    }
+
+    @Override
+    @Transactional
+    public BookDetailResponseDto updateBookDirect(long bookId, long memberId, BookDirectUpdateRequestDto request) {
+        if (memberId <= 0) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        validateDirectBookUpdateRequest(request);
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new LibriException(ErrorCode.BOOK_NOT_FOUND));
+
+        if (book.getRegisteredByMember() == null || book.getRegisteredByMember().getId() != memberId) {
+            throw new LibriException(ErrorCode.ACCESS_DENIED);
+        }
+
+        book.updateDirectBook(
+                trimToNull(request.title()),
+                trimToNull(request.author()),
+                trimToNull(request.publisher()),
+                normalizeOptionalText(request.isbn()),
+                request.totalPage(),
+                normalizeOptionalText(request.coverUrl()),
+                normalizeOptionalText(request.introduction()),
+                request.releaseDate(),
+                normalizeOptionalText(request.salePageUrl())
+        );
+
+        return getBookDetail(bookId, memberId);
     }
 
     /**
@@ -263,5 +295,51 @@ public class BookServiceImpl implements BookService {
         int check = (last == 'X' || last == 'x') ? 10 : (last - '0');
         sum += check;
         return sum % 11 == 0;
+    }
+
+    private void validateDirectBookUpdateRequest(BookDirectUpdateRequestDto request) {
+        if (request == null) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        boolean hasAnyField = request.title() != null
+                || request.author() != null
+                || request.publisher() != null
+                || request.isbn() != null
+                || request.totalPage() != null
+                || request.coverUrl() != null
+                || request.introduction() != null
+                || request.releaseDate() != null
+                || request.salePageUrl() != null;
+        if (!hasAnyField) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (request.title() != null && request.title().isBlank()) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (request.author() != null && request.author().isBlank()) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (request.totalPage() != null && request.totalPage() < 0) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        String normalizedIsbn = normalizeOptionalText(request.isbn());
+        if (normalizedIsbn != null && !normalizedIsbn.isBlank() && !isValidIsbn(normalizeIsbn(normalizedIsbn))) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private String normalizeOptionalText(String value) {
+        return trimToNull(value);
     }
 }

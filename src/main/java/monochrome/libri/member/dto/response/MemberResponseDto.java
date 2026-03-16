@@ -10,7 +10,8 @@ public record MemberResponseDto(
     SignType provider,
     String email,
     String nickname,
-    String profilePath
+    String profilePath,
+    boolean privateAccount
 ) {
     public static MemberResponseDto from(Member member) {
         return new MemberResponseDto(
@@ -18,7 +19,8 @@ public record MemberResponseDto(
                 member.getProvider(),
                 member.getEmail(),
                 member.getNickname(),
-                member.getProfilePath()
+                member.getProfilePath(),
+                member.isPrivateAccount()
         );
     }
 }

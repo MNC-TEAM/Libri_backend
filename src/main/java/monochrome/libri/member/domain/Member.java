@@ -48,6 +48,8 @@ public class Member extends AuditableEntity {
     @Column(length = 30)
     private String nickname;
     private String profilePath;
+    @Column(nullable = false)
+    private boolean privateAccount;
 
     // 상태 필드
     @Enumerated(EnumType.STRING)
@@ -62,7 +64,8 @@ public class Member extends AuditableEntity {
             String username,
             String nickname,
             String passwordHash,
-            String profilePath
+            String profilePath,
+            Boolean privateAccount
     ) {
         if (username != null) {
             this.username = username;
@@ -75,6 +78,9 @@ public class Member extends AuditableEntity {
         }
         if (profilePath != null) {
             this.profilePath = profilePath;
+        }
+        if (privateAccount != null) {
+            this.privateAccount = privateAccount;
         }
 
         return this;

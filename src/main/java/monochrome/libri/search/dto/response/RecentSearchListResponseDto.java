@@ -9,4 +9,7 @@ public record RecentSearchListResponseDto(
         int page,
         int size
 ) {
+    public static RecentSearchListResponseDto empty(int page, int size) {
+        return new RecentSearchListResponseDto(0, List.of(), false, page, size);
+    }
 }

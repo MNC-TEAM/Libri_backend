@@ -30,4 +30,5 @@ server:
 jwt:
   secret: ${JWT_SECRET}
   access-exp-seconds: ${JWT_ACCESS_EXPIRATION_SECONDS}
+  refresh-exp-seconds: ${JWT_REFRESH_EXPIRATION_SECONDS:1209600}
   issuer: ${JWT_ISSUER}

@@ -146,4 +146,12 @@ class ReviewServiceImplTest {
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).rating()).isEqualTo(4);
     }
+
+    @Test
+    void getReviewsByMember_returnsEmptyWhenUnauthenticated() {
+        var response = service.getReviewsByMember(0L, PageRequest.of(0, 10));
+
+        assertThat(response.content()).isEmpty();
+        assertThat(response.hasNext()).isFalse();
+    }
 }
