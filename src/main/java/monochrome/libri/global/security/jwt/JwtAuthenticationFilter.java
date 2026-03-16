@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import monochrome.libri.global.security.token.TokenType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,6 +44,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 토큰이 있는데 유효하지 않으면: 인증 주입 안하고 통과
         // =>  공개 API는 그대로 동작, 보호 API는 나중에 401 처리
         if(!jwtTokenProvider.isValid(token)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (jwtTokenProvider.getTokenType(token) != TokenType.ACCESS) {
             filterChain.doFilter(request, response);
             return;
         }

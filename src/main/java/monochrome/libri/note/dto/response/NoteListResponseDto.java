@@ -9,4 +9,7 @@ public record NoteListResponseDto(
         int page,
         int size
 ) {
+    public static NoteListResponseDto empty(int page, int size) {
+        return new NoteListResponseDto(0, List.of(), false, page, size);
+    }
 }

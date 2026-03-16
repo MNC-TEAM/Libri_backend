@@ -3,6 +3,7 @@ package monochrome.libri.book.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import monochrome.libri.global.domain.AuditableEntity;
+import monochrome.libri.member.domain.Member;
 
 import java.time.LocalDate;
 import java.util.regex.Pattern;
@@ -43,6 +44,10 @@ public class Book extends AuditableEntity {
     @Column(length = 255)
     String coverImageUrl;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "registered_by_member_id")
+    private Member registeredByMember;
+
     private static final Pattern ISBN_CLEANUP = Pattern.compile("[\\s-]");
 
     @PrePersist
@@ -50,6 +55,46 @@ public class Book extends AuditableEntity {
     void normalizeIsbn() {
         if (isbn != null) {
             isbn = ISBN_CLEANUP.matcher(isbn).replaceAll("");
+        }
+    }
+
+    public void updateDirectBook(
+            String title,
+            String author,
+            String publisher,
+            String isbn,
+            Integer totalPage,
+            String coverImageUrl,
+            String introduction,
+            LocalDate releaseDate,
+            String salePageUrl
+    ) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (author != null) {
+            this.author = author;
+        }
+        if (publisher != null) {
+            this.publisher = publisher;
+        }
+        if (isbn != null) {
+            this.isbn = isbn;
+        }
+        if (totalPage != null) {
+            this.totalPage = totalPage;
+        }
+        if (coverImageUrl != null) {
+            this.coverImageUrl = coverImageUrl;
+        }
+        if (introduction != null) {
+            this.introduction = introduction;
+        }
+        if (releaseDate != null) {
+            this.releaseDate = releaseDate;
+        }
+        if (salePageUrl != null) {
+            this.salePageUrl = salePageUrl;
         }
     }
 }

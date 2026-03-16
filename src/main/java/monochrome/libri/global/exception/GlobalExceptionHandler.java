@@ -7,8 +7,10 @@ import monochrome.libri.global.response.ErrorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 @Slf4j
 @RestControllerAdvice
@@ -61,6 +63,30 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
         ErrorResponse body = ErrorResponse.from(errorCode);
 
+        return ResponseEntity
+                .status(errorCode.getHttpStatus())
+                .body(ApiResponse.error(body));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException e, HttpServletRequest req) {
+        ErrorCode errorCode = ErrorCode.INVALID_INPUT_VALUE;
+        String actor = resolveActor();
+        FieldError fieldError = e.getBindingResult().getFieldError();
+        String message = fieldError != null && fieldError.getDefaultMessage() != null
+                ? fieldError.getDefaultMessage()
+                : errorCode.getMessage();
+
+        log.warn("error.validation code={} method={} uri={} actor={} field={} msg=\"{}\"",
+                errorCode.getCode(),
+                req.getMethod(),
+                req.getRequestURI(),
+                actor,
+                fieldError == null ? "-" : fieldError.getField(),
+                message
+        );
+
+        ErrorResponse body = ErrorResponse.from(errorCode, message);
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
                 .body(ApiResponse.error(body));

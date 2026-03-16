@@ -36,9 +36,8 @@ public class NoteController {
     @GetMapping
     @Operation(
             summary = "내 노트 목록 조회",
-            description = "회원이 작성한 노트 목록을 페이지네이션과 정렬 옵션으로 조회합니다."
+            description = "로그인 상태이면 회원이 작성한 노트 목록을 페이지네이션과 정렬 옵션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
-    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.INVALID_INPUT_VALUE

@@ -2,6 +2,7 @@ package monochrome.libri.member.service;
 
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
+import monochrome.libri.member.dto.request.RefreshTokenRequestDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
 
 /**
@@ -26,5 +27,7 @@ public interface AuthService {
     /**
      * 로그아웃
      */
-    void logout();
+    void logout(String refreshToken);
+
+    void validateRefreshRequest(RefreshTokenRequestDto request);
 }

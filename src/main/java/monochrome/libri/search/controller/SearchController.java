@@ -35,9 +35,8 @@ public class SearchController {
     @GetMapping("/recent")
     @Operation(
             summary = "최근 검색어 조회",
-            description = "회원의 최근 검색어 목록을 페이지네이션으로 조회합니다."
+            description = "로그인 상태이면 회원의 최근 검색어 목록을 페이지네이션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
-    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.INVALID_INPUT_VALUE
@@ -97,7 +96,7 @@ public class SearchController {
     @GetMapping("/trending")
     @Operation(
             summary = "인기 검색어 조회",
-            description = "전체 인기 검색어 목록을 조회합니다."
+            description = "전체 인기 검색어 목록을 조회합니다. 각 항목은 대표 도서의 제목과 표지 정보를 포함합니다."
     )
     public ResponseEntity<ApiResponse<TrendingKeywordListResponseDto>> getTrending(
             @Parameter(description = "조회 개수(1~20)", example = "10")

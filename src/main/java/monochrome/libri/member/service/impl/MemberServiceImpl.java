@@ -42,7 +42,8 @@ public class MemberServiceImpl implements MemberService {
                 memberUpdateRequestDto.username(),
                 memberUpdateRequestDto.nickname(),
                 passwordHash,
-                memberUpdateRequestDto.profilePath()
+                memberUpdateRequestDto.profilePath(),
+                memberUpdateRequestDto.privateAccount()
         );
     }
 

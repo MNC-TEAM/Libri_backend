@@ -11,9 +11,11 @@ import monochrome.libri.note.dto.request.NoteUpdateRequestDto;
 import monochrome.libri.note.dto.response.NoteSliceResponseDto;
 import monochrome.libri.note.dto.response.NoteSummaryResponseDto;
 import monochrome.libri.note.service.NoteService;
+import monochrome.libri.shelf.domain.ShelfStatus;
 import monochrome.libri.shelf.dto.request.ShelfCreateRequestDto;
 import monochrome.libri.shelf.dto.request.ShelfUpdateRequestDto;
 import monochrome.libri.shelf.dto.response.ShelfDetailResponseDto;
+import monochrome.libri.shelf.dto.response.ShelfListResponseDto;
 import monochrome.libri.shelf.service.ShelfService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,13 +30,13 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
 @RestController
 @RequestMapping("/api/v1/shelves")
-@SecurityRequirement(name = "BearerAuth")
 public class ShelfController {
 
     private final ShelfService shelfService;
@@ -43,6 +45,32 @@ public class ShelfController {
     public ShelfController(ShelfService shelfService, NoteService noteService) {
         this.shelfService = shelfService;
         this.noteService = noteService;
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "상태별 서재 목록 조회",
+            description = "로그인 상태이면 회원의 서재 목록을 상태별로 페이지네이션 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<ShelfListResponseDto>> getShelvesByStatus(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Parameter(description = "서재 상태", example = "READING")
+            @RequestParam ShelfStatus status,
+            @Parameter(description = "페이지(0부터)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 0 || size <= 0) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        Long memberId = userPrincipal == null ? null : userPrincipal.getMemberId();
+        ShelfListResponseDto response = shelfService.getShelvesByStatus(memberId, status, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
     @GetMapping("/{shelfId}")
@@ -66,8 +94,9 @@ public class ShelfController {
     @PostMapping
     @Operation(
             summary = "서재에 책 추가",
-            description = "회원 서재에 도서를 추가합니다."
+            description = "회원 서재에 도서를 추가합니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
+    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.INVALID_INPUT_VALUE,
@@ -86,8 +115,9 @@ public class ShelfController {
     @PatchMapping("/{shelfId}")
     @Operation(
             summary = "서재 정보 수정",
-            description = "서재 상태, 진행도, 기간 등의 정보를 수정합니다."
+            description = "서재 상태, 진행도, 기간 등의 정보를 수정합니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
+    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.SHELF_NOT_FOUND,
@@ -133,8 +163,9 @@ public class ShelfController {
     @PostMapping("/{shelfId}/notes")
     @Operation(
             summary = "서재 노트 작성",
-            description = "특정 서재에 노트를 작성합니다."
+            description = "특정 서재에 노트를 작성합니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
+    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.SHELF_NOT_FOUND,
@@ -154,8 +185,9 @@ public class ShelfController {
     @PatchMapping("/{shelfId}/notes/{noteId}")
     @Operation(
             summary = "서재 노트 수정",
-            description = "노트 내용/비공개 여부/진행 정보를 수정합니다."
+            description = "노트 내용/비공개 여부/진행 정보를 수정합니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
+    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.INVALID_INPUT_VALUE,
@@ -178,6 +210,7 @@ public class ShelfController {
             summary = "서재 노트 삭제",
             description = "서재의 노트를 삭제합니다."
     )
+    @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
             ErrorCode.NOTE_NOT_FOUND,

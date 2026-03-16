@@ -4,6 +4,7 @@ import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.response.ApiResponse;
 import monochrome.libri.book.dto.request.BookDirectCreateRequestDto;
+import monochrome.libri.book.dto.request.BookDirectUpdateRequestDto;
 import monochrome.libri.book.dto.response.BookDetailResponseDto;
 import monochrome.libri.book.dto.response.BookSliceResponseDto;
 import monochrome.libri.book.service.BookService;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -88,7 +90,7 @@ public class BookController {
     @PostMapping("/direct")
     @Operation(
             summary = "도서 직접 등록",
-            description = "외부 검색 없이 도서를 직접 등록하고 서재에 추가합니다."
+            description = "외부 검색 없이 도서를 직접 등록하고 서재에 추가합니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
     )
     @SecurityRequirement(name = "BearerAuth")
     @ApiErrorCodes({
@@ -103,5 +105,27 @@ public class BookController {
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
         bookService.createBookDirect(memberId, request);
         return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(ApiResponse.ok());
+    }
+
+    @PatchMapping("/{bookId}")
+    @Operation(
+            summary = "직접 등록한 도서 수정",
+            description = "본인이 직접 등록한 도서 정보만 수정할 수 있습니다. 요청값 검증 실패 시 필드별 메시지가 반환됩니다."
+    )
+    @SecurityRequirement(name = "BearerAuth")
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.BOOK_NOT_FOUND,
+            ErrorCode.ACCESS_DENIED,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<BookDetailResponseDto>> updateBookDirect(
+            @PathVariable long bookId,
+            @AuthenticationPrincipal monochrome.libri.global.security.UserPrincipal userPrincipal,
+            @jakarta.validation.Valid @org.springframework.web.bind.annotation.RequestBody BookDirectUpdateRequestDto request
+    ) {
+        long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
+        BookDetailResponseDto response = bookService.updateBookDirect(bookId, memberId, request);
+        return ResponseEntity.ok(ApiResponse.ok(response));
     }
 }

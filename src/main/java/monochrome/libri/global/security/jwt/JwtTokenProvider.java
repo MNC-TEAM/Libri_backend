@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import monochrome.libri.global.security.token.TokenIssueResult;
+import monochrome.libri.global.security.token.TokenType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -21,32 +22,44 @@ public class JwtTokenProvider {
 
     private final SecretKey key;
     private final long accessExpSeconds;
+    private final long refreshExpSeconds;
     private final String issuer;
     private final Clock clock;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String key,
             @Value("${jwt.access-exp-seconds}") long accessExpSeconds,
+            @Value("${jwt.refresh-exp-seconds}") long refreshExpSeconds,
             @Value("${jwt.issuer}") String issuer,
             Clock clock
     ) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(key));
         this.accessExpSeconds = accessExpSeconds;
+        this.refreshExpSeconds = refreshExpSeconds;
         this.issuer = issuer;
         this.clock = clock;
     }
 
     public TokenIssueResult createAccessToken(long memberId) {
+        return createToken(memberId, TokenType.ACCESS, accessExpSeconds);
+    }
+
+    public TokenIssueResult createRefreshToken(long memberId) {
+        return createToken(memberId, TokenType.REFRESH, refreshExpSeconds);
+    }
+
+    private TokenIssueResult createToken(long memberId, TokenType tokenType, long expSeconds) {
         Instant now = clock.instant();
-        Instant exp = now.plusSeconds(accessExpSeconds);
+        Instant exp = now.plusSeconds(expSeconds);
         String jti = UUID.randomUUID().toString();
 
         String token = Jwts.builder()
                 .issuer(issuer)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
-                .subject(String.valueOf(memberId))          // 대표 식별자
+                .subject(String.valueOf(memberId))
                 .id(jti)
+                .claim("type", tokenType.name())
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
 
@@ -72,5 +85,14 @@ public class JwtTokenProvider {
 
     public long getMemberId(String token) {
         return Long.parseLong(parse(token).getPayload().getSubject());
+    }
+
+    public TokenType getTokenType(String token) {
+        String type = parse(token).getPayload().get("type", String.class);
+        return TokenType.valueOf(type);
+    }
+
+    public long getRefreshExpSeconds() {
+        return refreshExpSeconds;
     }
 }

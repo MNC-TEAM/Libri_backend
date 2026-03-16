@@ -3,6 +3,7 @@ package monochrome.libri.book.service;
 import monochrome.libri.book.dto.response.BookResponseDto;
 import monochrome.libri.book.dto.response.BookDetailResponseDto;
 import monochrome.libri.book.dto.request.BookDirectCreateRequestDto;
+import monochrome.libri.book.dto.request.BookDirectUpdateRequestDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 
@@ -16,4 +17,5 @@ public interface BookService {
 
     BookDetailResponseDto getBookDetail(long bookId, Long memberId);
     void createBookDirect(long memberId, BookDirectCreateRequestDto request);
+    BookDetailResponseDto updateBookDirect(long bookId, long memberId, BookDirectUpdateRequestDto request);
 }

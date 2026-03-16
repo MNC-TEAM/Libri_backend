@@ -107,6 +107,15 @@ class NoteServiceImplTest {
     }
 
     @Test
+    void getNotesByMember_returnsEmptyWhenUnauthenticated() {
+        var response = service.getNotesByMember(0L, PageRequest.of(0, 10));
+
+        assertThat(response.totalCount()).isZero();
+        assertThat(response.content()).isEmpty();
+        assertThat(response.hasNext()).isFalse();
+    }
+
+    @Test
     void updateNote_requiresOwner() {
         Member owner = TestFixtures.member(1L);
         Shelf shelf = TestFixtures.shelf(2L, owner, TestFixtures.book(3L, 100));

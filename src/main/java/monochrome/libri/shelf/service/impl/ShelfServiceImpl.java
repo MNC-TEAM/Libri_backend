@@ -9,16 +9,21 @@ import monochrome.libri.member.service.MemberService;
 import monochrome.libri.review.service.ReviewService;
 import monochrome.libri.shelf.domain.Shelf;
 import monochrome.libri.shelf.dto.response.ShelfDetailResponseDto;
+import monochrome.libri.shelf.dto.response.ShelfListItemResponseDto;
+import monochrome.libri.shelf.dto.response.ShelfListResponseDto;
 import monochrome.libri.shelf.dto.request.ShelfUpdateRequestDto;
 import monochrome.libri.shelf.dto.request.ShelfCreateRequestDto;
 import monochrome.libri.shelf.repository.ShelfRepository;
 import monochrome.libri.shelf.service.ShelfService;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 
 @Service
@@ -55,6 +60,28 @@ public class ShelfServiceImpl implements ShelfService {
                 .orElseThrow(() -> new LibriException(ErrorCode.SHELF_NOT_FOUND));
 
         return buildShelfDetail(shelf, shelfId, memberId);
+    }
+
+    @Override
+    public ShelfListResponseDto getShelvesByStatus(Long memberId, monochrome.libri.shelf.domain.ShelfStatus status, Pageable pageable) {
+        if (memberId == null || memberId <= 0) {
+            return ShelfListResponseDto.empty(pageable.getPageNumber(), pageable.getPageSize());
+        }
+
+        Slice<Shelf> slice = shelfRepository.findByMemberIdAndStatusOrderByCreatedDateDesc(memberId, status, pageable);
+        List<ShelfListItemResponseDto> content = slice.getContent().stream()
+                .map(this::toShelfListItem)
+                .toList();
+
+        long totalCount = shelfRepository.countByMemberIdAndStatus(memberId, status);
+
+        return new ShelfListResponseDto(
+                totalCount,
+                content,
+                slice.hasNext(),
+                slice.getNumber(),
+                slice.getSize()
+        );
     }
 
     @Override
@@ -246,5 +273,27 @@ public class ShelfServiceImpl implements ShelfService {
             return 0;
         }
         return (int) diff + 1;
+    }
+
+    private ShelfListItemResponseDto toShelfListItem(Shelf shelf) {
+        int currentPage = shelf.getCurrentPage() == null ? 0 : shelf.getCurrentPage();
+        int progressPercent = calculateProgressPercent(
+                shelf.getProgressType(),
+                shelf.getProgressValue(),
+                currentPage,
+                shelf.getBook().getTotalPage()
+        );
+
+        return new ShelfListItemResponseDto(
+                shelf.getId(),
+                shelf.getBook().getId(),
+                shelf.getBook().getTitle(),
+                shelf.getBook().getAuthor(),
+                shelf.getBook().getCoverImageUrl(),
+                shelf.getStatus(),
+                progressPercent,
+                shelf.getStartDate(),
+                shelf.getEndDate()
+        );
     }
 }

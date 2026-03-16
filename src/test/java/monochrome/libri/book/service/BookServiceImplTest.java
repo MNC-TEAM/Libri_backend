@@ -3,6 +3,7 @@ package monochrome.libri.book.service;
 import monochrome.libri.TestFixtures;
 import monochrome.libri.book.domain.Book;
 import monochrome.libri.book.dto.request.BookDirectCreateRequestDto;
+import monochrome.libri.book.dto.request.BookDirectUpdateRequestDto;
 import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
@@ -142,5 +143,77 @@ class BookServiceImplTest {
 
         verify(bookRepository).save(any());
         verify(shelfRepository).save(any());
+    }
+
+    @Test
+    void updateBookDirect_deniesNonOwner() {
+        Member owner = TestFixtures.member(1L);
+        Member other = TestFixtures.member(2L);
+        Book book = Book.builder()
+                .id(10L)
+                .title("title")
+                .author("author")
+                .registeredByMember(owner)
+                .build();
+        when(bookRepository.findById(10L)).thenReturn(Optional.of(book));
+
+        BookDirectUpdateRequestDto dto = new BookDirectUpdateRequestDto(
+                "new title",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        assertThatThrownBy(() -> service.updateBookDirect(10L, other.getId(), dto))
+                .isInstanceOf(LibriException.class);
+    }
+
+    @Test
+    void updateBookDirect_updatesOwnedDirectBook() {
+        Member owner = TestFixtures.member(1L);
+        Book book = Book.builder()
+                .id(10L)
+                .title("title")
+                .author("author")
+                .publisher("publisher")
+                .isbn("9780306406157")
+                .totalPage(10)
+                .coverImageUrl("/cover")
+                .registeredByMember(owner)
+                .build();
+
+        when(bookRepository.findById(10L)).thenReturn(Optional.of(book));
+        when(reviewRepository.findByBookIdAndStatusOrderByCreatedDateDesc(eq(10L), eq(ReviewStatus.ACTIVE), any()))
+                .thenReturn(new SliceImpl<>(List.of(), PageRequest.of(0, 3), false));
+        when(reviewService.getReviewStats(10L)).thenReturn(null);
+        when(shelfRepository.findByMemberIdAndBookId(1L, 10L)).thenReturn(Optional.empty());
+
+        BookDirectUpdateRequestDto dto = new BookDirectUpdateRequestDto(
+                "  new title  ",
+                "  new author ",
+                "new publisher",
+                "978-0-306-40615-7",
+                100,
+                "/new-cover",
+                " intro ",
+                null,
+                " /sale "
+        );
+
+        var response = service.updateBookDirect(10L, 1L, dto);
+
+        assertThat(book.getTitle()).isEqualTo("new title");
+        assertThat(book.getAuthor()).isEqualTo("new author");
+        assertThat(book.getPublisher()).isEqualTo("new publisher");
+        assertThat(book.getTotalPage()).isEqualTo(100);
+        assertThat(book.getCoverImageUrl()).isEqualTo("/new-cover");
+        assertThat(book.getIntroduction()).isEqualTo("intro");
+        assertThat(book.getSalePageUrl()).isEqualTo("/sale");
+        assertThat(response.bookId()).isEqualTo(10L);
     }
 }

@@ -6,6 +6,7 @@ import monochrome.libri.global.security.UserPrincipal;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.request.NicknameUpdateRequestDto;
+import monochrome.libri.member.dto.request.PrivacyUpdateRequestDto;
 import monochrome.libri.member.service.MemberService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class MemberControllerTest {
     void updateNickname_updatesNicknameForAuthenticatedUser() {
         UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
         Member updated = TestFixtures.member(1L);
-        updated.updateMember(null, "newNick", null, null);
+        updated.updateMember(null, "newNick", null, null, null);
 
         when(memberService.updateMember(eq(1L), any(MemberUpdateRequestDto.class))).thenReturn(updated);
 
@@ -52,5 +53,21 @@ class MemberControllerTest {
         verify(memberService).updateMember(eq(1L), captor.capture());
         assertThat(captor.getValue().nickname()).isEqualTo("newNick");
         assertThat(response.getBody().data().nickname()).isEqualTo("newNick");
+    }
+
+    @Test
+    void updatePrivacy_updatesPrivateAccountForAuthenticatedUser() {
+        UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
+        Member updated = TestFixtures.member(1L);
+        updated.updateMember(null, null, null, null, true);
+
+        when(memberService.updateMember(eq(1L), any(MemberUpdateRequestDto.class))).thenReturn(updated);
+
+        var response = controller.updatePrivacy(principal, new PrivacyUpdateRequestDto(true));
+
+        ArgumentCaptor<MemberUpdateRequestDto> captor = ArgumentCaptor.forClass(MemberUpdateRequestDto.class);
+        verify(memberService).updateMember(eq(1L), captor.capture());
+        assertThat(captor.getValue().privateAccount()).isTrue();
+        assertThat(response.getBody().data().privateAccount()).isTrue();
     }
 }

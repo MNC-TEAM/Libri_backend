@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/me")
-@SecurityRequirement(name = "BearerAuth")
 public class MyContentController {
 
     private final NoteService noteService;
@@ -46,7 +45,7 @@ public class MyContentController {
     @GetMapping("/bookmarks/notes")
     @Operation(
             summary = "북마크한 노트 조회",
-            description = "회원이 북마크한 노트 목록을 페이지네이션으로 조회합니다."
+            description = "로그인 상태이면 회원이 북마크한 노트 목록을 페이지네이션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
@@ -69,7 +68,7 @@ public class MyContentController {
     @GetMapping("/bookmarks/reviews")
     @Operation(
             summary = "북마크한 리뷰 조회",
-            description = "회원이 북마크한 리뷰 목록을 페이지네이션으로 조회합니다."
+            description = "로그인 상태이면 회원이 북마크한 리뷰 목록을 페이지네이션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
@@ -92,7 +91,7 @@ public class MyContentController {
     @GetMapping("/reviews")
     @Operation(
             summary = "내 리뷰 조회",
-            description = "회원이 작성한 리뷰 목록을 페이지네이션으로 조회합니다."
+            description = "로그인 상태이면 회원이 작성한 리뷰 목록을 페이지네이션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,
@@ -115,7 +114,7 @@ public class MyContentController {
     @GetMapping("/comments")
     @Operation(
             summary = "내 댓글 조회",
-            description = "회원이 작성한 노트 댓글 목록을 페이지네이션으로 조회합니다."
+            description = "로그인 상태이면 회원이 작성한 노트 댓글 목록을 페이지네이션으로 조회하고, 비로그인 상태이면 빈 배열을 반환합니다."
     )
     @ApiErrorCodes({
             ErrorCode.AUTHENTICATION_FAILED,

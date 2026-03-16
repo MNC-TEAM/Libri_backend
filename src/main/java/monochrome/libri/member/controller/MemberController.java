@@ -7,6 +7,7 @@ import monochrome.libri.global.security.UserPrincipal;
 import monochrome.libri.global.swagger.ApiErrorCodes;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.request.NicknameUpdateRequestDto;
+import monochrome.libri.member.dto.request.PrivacyUpdateRequestDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
 import monochrome.libri.member.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,6 +76,41 @@ public class MemberController {
                 request.nickname(),
                 null,
                 null,
+                null,
+                null,
+                null
+        );
+        var updated = memberService.updateMember(userPrincipal.getMemberId(), updateRequest);
+        return ResponseEntity.ok(ApiResponse.ok(MemberResponseDto.from(updated)));
+    }
+
+    @PatchMapping("/me/privacy")
+    @Operation(
+            summary = "계정 비공개 설정 변경",
+            description = "로그인한 회원의 계정 비공개 여부를 변경합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<MemberResponseDto>> updatePrivacy(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody PrivacyUpdateRequestDto request
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        MemberUpdateRequestDto updateRequest = new MemberUpdateRequestDto(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                request.privateAccount(),
                 null,
                 null
         );

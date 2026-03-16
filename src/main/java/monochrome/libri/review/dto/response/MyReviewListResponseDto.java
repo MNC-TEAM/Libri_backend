@@ -9,4 +9,7 @@ public record MyReviewListResponseDto(
         int page,
         int size
 ) {
+    public static MyReviewListResponseDto empty(int page, int size) {
+        return new MyReviewListResponseDto(0, List.of(), false, page, size);
+    }
 }

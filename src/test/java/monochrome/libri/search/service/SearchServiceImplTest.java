@@ -1,6 +1,7 @@
 package monochrome.libri.search.service;
 
 import monochrome.libri.TestFixtures;
+import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
@@ -33,6 +34,9 @@ class SearchServiceImplTest {
     @Mock
     private MemberService memberService;
 
+    @Mock
+    private BookRepository bookRepository;
+
     @InjectMocks
     private monochrome.libri.search.service.impl.SearchServiceImpl service;
 
@@ -55,9 +59,12 @@ class SearchServiceImplTest {
     }
 
     @Test
-    void getRecentSearches_requiresAuth() {
-        assertThatThrownBy(() -> service.getRecentSearches(0L, PageRequest.of(0, 10)))
-                .isInstanceOf(LibriException.class);
+    void getRecentSearches_returnsEmptyWhenUnauthenticated() {
+        var response = service.getRecentSearches(0L, PageRequest.of(0, 10));
+
+        assertThat(response.totalCount()).isZero();
+        assertThat(response.content()).isEmpty();
+        assertThat(response.hasNext()).isFalse();
     }
 
     @Test
@@ -88,10 +95,13 @@ class SearchServiceImplTest {
         };
 
         when(searchKeywordRepository.findTopKeywords(any())).thenReturn(List.of(row));
+        when(bookRepository.searchByKeyword(eq("hello"), any()))
+                .thenReturn(new SliceImpl<>(List.of(TestFixtures.book(1L, 100)), PageRequest.of(0, 1), false));
 
         var response = service.getTrendingKeywords(999);
 
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).count()).isEqualTo(0L);
+        assertThat(response.content().get(0).book().bookId()).isEqualTo(1L);
     }
 }
