@@ -14,6 +14,8 @@ public record HomeResponseDto(
             Long memberId,
             String nickname,
             String profileImageUrl,
+            long followerCount,
+            long followingCount,
             int unreadNotiCount
     ) {
     }

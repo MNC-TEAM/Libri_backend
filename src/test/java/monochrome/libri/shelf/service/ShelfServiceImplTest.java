@@ -94,6 +94,7 @@ class ShelfServiceImplTest {
         assertThat(response.totalCount()).isEqualTo(1L);
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).bookId()).isEqualTo(2L);
+        assertThat(response.content().get(0).publisher()).isEqualTo("publisher2");
         assertThat(response.content().get(0).progressPercent()).isEqualTo(20);
     }
 
@@ -171,7 +172,44 @@ class ShelfServiceImplTest {
 
         var response = service.updateShelf(3L, 1L, dto);
 
+        assertThat(response.book().publisher()).isEqualTo("publisher2");
         assertThat(response.reading().status()).isEqualTo(ShelfStatus.FINISHED);
         assertThat(response.reading().progressPercent()).isEqualTo(100);
+    }
+
+    @Test
+    void getShelvesByStatus_usesProgressValueWhenPageTypeAndCurrentPageIsNull() {
+        ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        ReviewService reviewService = mock(ReviewService.class);
+        MemberService memberService = mock(MemberService.class);
+        BookRepository bookRepository = mock(BookRepository.class);
+        Clock clock = Clock.systemUTC();
+        ShelfServiceImpl service = new ShelfServiceImpl(shelfRepository, reviewService, memberService, bookRepository, clock);
+
+        Member member = TestFixtures.member(1L);
+        Book book = TestFixtures.book(2L, 200);
+        Shelf shelf = Shelf.builder()
+                .id(3L)
+                .member(member)
+                .book(book)
+                .status(ShelfStatus.READING)
+                .progressType(ShelfProgressType.PAGE)
+                .progressValue(40)
+                .currentPage(null)
+                .startDate(LocalDate.of(2024, 1, 1))
+                .build();
+
+        when(shelfRepository.findByMemberIdAndStatusOrderByCreatedDateDesc(eq(1L), eq(ShelfStatus.READING), any()))
+                .thenReturn(new org.springframework.data.domain.SliceImpl<>(
+                        java.util.List.of(shelf),
+                        org.springframework.data.domain.PageRequest.of(0, 10),
+                        false
+                ));
+        when(shelfRepository.countByMemberIdAndStatus(1L, ShelfStatus.READING)).thenReturn(1L);
+
+        var response = service.getShelvesByStatus(1L, ShelfStatus.READING, org.springframework.data.domain.PageRequest.of(0, 10));
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).progressPercent()).isEqualTo(20);
     }
 }
