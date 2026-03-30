@@ -12,6 +12,7 @@ public record ShelfDetailResponseDto(
             Long bookId,
             String title,
             String author,
+            String publisher,
             String coverUrl,
             java.time.LocalDate releaseDate
     ) {

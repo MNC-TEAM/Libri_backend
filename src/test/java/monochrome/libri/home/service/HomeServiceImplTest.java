@@ -1,6 +1,8 @@
 package monochrome.libri.home.service;
 
 import monochrome.libri.TestFixtures;
+import monochrome.libri.follow.domain.FollowStatus;
+import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.home.dto.response.HomeResponseDto;
 import monochrome.libri.home.service.impl.HomeServiceImpl;
 import monochrome.libri.member.domain.Member;
@@ -29,14 +31,17 @@ class HomeServiceImplTest {
     @Test
     void getHome_returnsAnonymousSummaryForNullMember() {
         MemberService memberService = mock(MemberService.class);
+        FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, shelfRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, clock);
 
         HomeResponseDto response = service.getHome(null);
 
         assertThat(response.me().memberId()).isNull();
+        assertThat(response.me().followerCount()).isZero();
+        assertThat(response.me().followingCount()).isZero();
         assertThat(response.shelfSummary().wantToReadCount()).isEqualTo(0);
         assertThat(response.readingBooks()).isEmpty();
     }
@@ -44,11 +49,14 @@ class HomeServiceImplTest {
     @Test
     void getHome_buildsReadingBooksAndCounts() {
         MemberService memberService = mock(MemberService.class);
+        FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
         Member member = TestFixtures.member(1L);
         when(memberService.getMemberById(1L)).thenReturn(Optional.of(member));
+        when(followRepository.countByFollowingAndFollowStatus(member, FollowStatus.FOLLOW)).thenReturn(4L);
+        when(followRepository.countByFollowerAndFollowStatus(member, FollowStatus.FOLLOW)).thenReturn(7L);
         when(shelfRepository.findCountSummaryByMemberId(1L))
                 .thenReturn(new ShelfCountSummary(1, 2, 3));
 
@@ -70,13 +78,54 @@ class HomeServiceImplTest {
         when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.FINISHED), eq(3)))
                 .thenReturn(List.of());
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, shelfRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, clock);
         HomeResponseDto response = service.getHome(1L);
 
+        assertThat(response.me().followerCount()).isEqualTo(4);
+        assertThat(response.me().followingCount()).isEqualTo(7);
         assertThat(response.shelfSummary().wantToReadCount()).isEqualTo(1);
         assertThat(response.readingBooks()).hasSize(1);
         HomeResponseDto.ReadingBook book = response.readingBooks().get(0);
         assertThat(book.progressPercent()).isEqualTo(25);
         assertThat(book.readingDays()).isEqualTo(3);
+    }
+
+    @Test
+    void getHome_usesProgressValueWhenPageTypeAndCurrentPageIsNull() {
+        MemberService memberService = mock(MemberService.class);
+        FollowRepository followRepository = mock(FollowRepository.class);
+        ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
+
+        Member member = TestFixtures.member(1L);
+        when(memberService.getMemberById(1L)).thenReturn(Optional.of(member));
+        when(followRepository.countByFollowingAndFollowStatus(member, FollowStatus.FOLLOW)).thenReturn(0L);
+        when(followRepository.countByFollowerAndFollowStatus(member, FollowStatus.FOLLOW)).thenReturn(0L);
+        when(shelfRepository.findCountSummaryByMemberId(1L))
+                .thenReturn(new ShelfCountSummary(0, 1, 0));
+
+        ShelfBookRow readingRow = new ShelfBookRow(
+                10L,
+                20L,
+                "Title",
+                "/cover",
+                200,
+                null,
+                ShelfProgressType.PAGE,
+                50,
+                LocalDate.of(2024, 1, 8)
+        );
+        when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.READING), eq(3)))
+                .thenReturn(List.of(readingRow));
+        when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.WANT_TO_READ), eq(3)))
+                .thenReturn(List.of());
+        when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.FINISHED), eq(3)))
+                .thenReturn(List.of());
+
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, clock);
+        HomeResponseDto response = service.getHome(1L);
+
+        assertThat(response.readingBooks()).hasSize(1);
+        assertThat(response.readingBooks().get(0).progressPercent()).isEqualTo(25);
     }
 }

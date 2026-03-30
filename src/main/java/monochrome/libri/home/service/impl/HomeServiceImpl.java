@@ -1,5 +1,7 @@
 package monochrome.libri.home.service.impl;
 
+import monochrome.libri.follow.domain.FollowStatus;
+import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.home.dto.response.HomeResponseDto;
@@ -25,11 +27,18 @@ public class HomeServiceImpl implements HomeService {
     private static final int HOME_BOOK_PREVIEW_LIMIT = 3;
 
     private final MemberService memberService;
+    private final FollowRepository followRepository;
     private final ShelfRepository shelfRepository;
     private final Clock clock;
 
-    public HomeServiceImpl(MemberService memberService, ShelfRepository shelfRepository, Clock clock) {
+    public HomeServiceImpl(
+            MemberService memberService,
+            FollowRepository followRepository,
+            ShelfRepository shelfRepository,
+            Clock clock
+    ) {
         this.memberService = memberService;
+        this.followRepository = followRepository;
         this.shelfRepository = shelfRepository;
         this.clock = clock;
     }
@@ -60,17 +69,21 @@ public class HomeServiceImpl implements HomeService {
 
     private HomeResponseDto.MeSummary buildMeSummary(Long memberId) {
         if (memberId == null) {
-            return new HomeResponseDto.MeSummary(null, null, null, 0);
+            return new HomeResponseDto.MeSummary(null, null, null, 0, 0, 0);
         }
 
         Member member = memberService.getMemberById(memberId)
                 .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));
+        long followerCount = followRepository.countByFollowingAndFollowStatus(member, FollowStatus.FOLLOW);
+        long followingCount = followRepository.countByFollowerAndFollowStatus(member, FollowStatus.FOLLOW);
 
         // TODO: 현재 알림 기능이 없으므로 미확인 알림 수는 0으로 설정
         return new HomeResponseDto.MeSummary(
                 member.getId(),
                 member.getNickname(),
                 member.getProfilePath(),
+                followerCount,
+                followingCount,
                 0
         );
     }
@@ -103,7 +116,7 @@ public class HomeServiceImpl implements HomeService {
         return rows.stream()
                 .map(row -> {
                     int totalPage = safeInt(row.totalPage());
-                    int currentPage = safeInt(row.currentPage());
+                    int currentPage = resolveCurrentPage(row.progressType(), row.currentPage(), row.progressValue());
                     int progressPercent = calculateProgressPercent(
                             row.progressType(),
                             safeInt(row.progressValue()),
@@ -147,6 +160,17 @@ public class HomeServiceImpl implements HomeService {
 
     private int safeInt(Integer value) {
         return value == null ? 0 : value;
+    }
+
+    private int resolveCurrentPage(
+            monochrome.libri.shelf.domain.ShelfProgressType progressType,
+            Integer currentPage,
+            Integer progressValue
+    ) {
+        if (progressType == monochrome.libri.shelf.domain.ShelfProgressType.PAGE && currentPage == null) {
+            return safeInt(progressValue);
+        }
+        return safeInt(currentPage);
     }
 
     private int calculateProgressPercent(

@@ -91,11 +91,13 @@ public class FollowServiceImpl implements FollowService{
 
     @Override
     public Slice<MemberSummaryDto> findFollowers(Long memberId, Pageable pageable) {
-        return null;
+        Member member = getMemberOrThrow(memberId);
+        return followRepository.findFollowers(member, pageable);
     }
 
     @Override
     public Slice<MemberSummaryDto> findFollowings(Long memberId, Pageable pageable) {
-        return null;
+        Member member = getMemberOrThrow(memberId);
+        return followRepository.findFollowings(member, pageable);
     }
 }

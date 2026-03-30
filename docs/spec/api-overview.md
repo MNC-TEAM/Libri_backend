@@ -592,6 +592,241 @@ Query:
 - `DELETE /reviews/{reviewId}/bookmarks`
 - Auth: 필요
 
+## Notice
+
+### 공지사항 목록 조회
+
+- `GET /notices`
+- Auth: 없음
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `NoticeListResponseDto`
+
+비고:
+
+- 공개된 공지사항만 조회
+- 고정 공지가 우선 노출되고 최신순 정렬
+
+### 공지사항 상세 조회
+
+- `GET /notices/{noticeId}`
+- Auth: 없음
+
+출력:
+
+- `NoticeDetailResponseDto`
+
+대표 에러:
+
+- `O001 NOTICE_NOT_FOUND`
+
+### 공지사항 등록
+
+- `POST /admin/notices`
+- Auth: 필요
+
+입력:
+
+- `title`
+- `content`
+- `pinned`
+- `published`
+
+출력:
+
+- `201 Created`
+- `NoticeDetailResponseDto`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `C002`
+
+비고:
+
+- 관리자만 등록 가능
+
+### 공지사항 수정
+
+- `PATCH /admin/notices/{noticeId}`
+- Auth: 필요
+
+입력:
+
+- `title`
+- `content`
+- `pinned`
+- `published`
+
+출력:
+
+- `NoticeDetailResponseDto`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `O001`
+- `C002`
+
+### 공지사항 삭제
+
+- `DELETE /admin/notices/{noticeId}`
+- Auth: 필요
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `O001`
+
+## Inquiry
+
+### 문의 작성
+
+- `POST /inquiries`
+- Auth: 필요
+
+입력:
+
+- `title`
+- `content`
+
+출력:
+
+- `201 Created`
+- `InquiryDetailResponseDto`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `C002`
+
+### 내 문의 목록 조회
+
+- `GET /inquiries/me`
+- Auth: 필요
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `InquiryListResponseDto`
+
+대표 에러:
+
+- `A001`
+- `C002`
+
+### 문의 상세 조회
+
+- `GET /inquiries/{inquiryId}`
+- Auth: 필요
+
+출력:
+
+- `InquiryDetailResponseDto`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `Q001 INQUIRY_NOT_FOUND`
+
+비고:
+
+- 본인 문의 또는 관리자만 조회 가능
+
+### 문의 전체 조회
+
+- `GET /admin/inquiries`
+- Auth: 필요
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `InquiryListResponseDto`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `C002`
+
+비고:
+
+- 관리자만 조회 가능
+
+### 문의 답변 등록
+
+- `PATCH /admin/inquiries/{inquiryId}/answer`
+- Auth: 필요
+
+입력:
+
+- `answerContent`
+
+출력:
+
+- `InquiryDetailResponseDto`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `Q001`
+- `C002`
+
+비고:
+
+- 답변 등록 시 상태는 `ANSWERED`로 변경
+
+### 문의 상태 변경
+
+- `PATCH /admin/inquiries/{inquiryId}/status`
+- Auth: 필요
+
+입력:
+
+- `status: PENDING | ANSWERED | CLOSED`
+
+출력:
+
+- `InquiryDetailResponseDto`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `M001`
+- `Q001`
+- `C002`
+
+비고:
+
+- 관리자만 상태 변경 가능
+
 ## Search
 
 ### 최근 검색어 조회
@@ -716,6 +951,10 @@ Query:
   - 댓글 없음
 - `R001`
   - 리뷰 없음
+- `O001`
+  - 공지사항 없음
+- `Q001`
+  - 문의 없음
 
 ## 프론트 체크리스트
 
@@ -725,3 +964,4 @@ Query:
 - validation 실패는 `C002`와 `message`를 그대로 사용자에게 노출 가능
 - 직접 등록 도서 수정은 등록자만 가능하므로 `ACCESS_DENIED` 처리 필요
 - 비공개 계정 설정은 현재 저장까지 반영되며, 실제 접근 제한 정책은 후속 반영 가능성 있음
+- 관리자 전용 공지/문의 API는 토큰이 있어도 일반 사용자면 `A002` 처리

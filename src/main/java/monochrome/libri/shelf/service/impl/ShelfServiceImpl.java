@@ -180,7 +180,7 @@ public class ShelfServiceImpl implements ShelfService {
 
     private ShelfDetailResponseDto buildShelfDetail(Shelf shelf, long shelfId, Long memberId) {
         int totalPage = shelf.getBook().getTotalPage();
-        int currentPage = shelf.getCurrentPage() == null ? 0 : shelf.getCurrentPage();
+        int currentPage = resolveCurrentPage(shelf);
         int progressPercent = calculateProgressPercent(
                 shelf.getProgressType(),
                 shelf.getProgressValue(),
@@ -192,6 +192,7 @@ public class ShelfServiceImpl implements ShelfService {
                 shelf.getBook().getId(),
                 shelf.getBook().getTitle(),
                 shelf.getBook().getAuthor(),
+                shelf.getBook().getPublisher(),
                 shelf.getBook().getCoverImageUrl(),
                 shelf.getBook().getReleaseDate()
         );
@@ -276,7 +277,7 @@ public class ShelfServiceImpl implements ShelfService {
     }
 
     private ShelfListItemResponseDto toShelfListItem(Shelf shelf) {
-        int currentPage = shelf.getCurrentPage() == null ? 0 : shelf.getCurrentPage();
+        int currentPage = resolveCurrentPage(shelf);
         int progressPercent = calculateProgressPercent(
                 shelf.getProgressType(),
                 shelf.getProgressValue(),
@@ -289,11 +290,20 @@ public class ShelfServiceImpl implements ShelfService {
                 shelf.getBook().getId(),
                 shelf.getBook().getTitle(),
                 shelf.getBook().getAuthor(),
+                shelf.getBook().getPublisher(),
                 shelf.getBook().getCoverImageUrl(),
                 shelf.getStatus(),
                 progressPercent,
                 shelf.getStartDate(),
                 shelf.getEndDate()
         );
+    }
+
+    private int resolveCurrentPage(Shelf shelf) {
+        if (shelf.getProgressType() == monochrome.libri.shelf.domain.ShelfProgressType.PAGE
+                && shelf.getCurrentPage() == null) {
+            return shelf.getProgressValue();
+        }
+        return shelf.getCurrentPage() == null ? 0 : shelf.getCurrentPage();
     }
 }
