@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,6 +30,27 @@ class MemberControllerTest {
 
     @InjectMocks
     private MemberController controller;
+
+    @Test
+    void getMe_requiresAuth() {
+        assertThatThrownBy(() -> controller.getMe(null))
+                .isInstanceOf(LibriException.class);
+        verifyNoInteractions(memberService);
+    }
+
+    @Test
+    void getMe_returnsAuthenticatedMember() {
+        UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
+        Member member = TestFixtures.member(1L);
+
+        when(memberService.getMemberById(1L)).thenReturn(Optional.of(member));
+
+        var response = controller.getMe(principal);
+
+        verify(memberService).getMemberById(1L);
+        assertThat(response.getBody().data().id()).isEqualTo(1L);
+        assertThat(response.getBody().data().email()).isEqualTo(member.getEmail());
+    }
 
     @Test
     void updateNickname_requiresAuth() {
