@@ -27,6 +27,27 @@ public class MemberController {
         this.memberService = memberService;
     }
 
+    @GetMapping("/me")
+    @Operation(
+            summary = "내 정보 조회",
+            description = "액세스 토큰으로 로그인한 회원의 정보를 조회합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.MEMBER_NOT_FOUND
+    })
+    public ResponseEntity<ApiResponse<MemberResponseDto>> getMe(
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        var member = memberService.getMemberById(userPrincipal.getMemberId())
+                .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));
+        return ResponseEntity.ok(ApiResponse.ok(MemberResponseDto.from(member)));
+    }
+
     /**
      * 회원 탈퇴 (현재 로그인한 사용자 기준)
      * DELETE /api/v1/auth/me
