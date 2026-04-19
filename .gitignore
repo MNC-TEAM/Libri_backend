@@ -9,6 +9,9 @@ build/
 .env
 .env.local-dev
 
+### Firebase 서비스 계정 (로컬 전용) ###
+src/main/resources/libri-firebase.json
+
 ### local scripts ###
 run.sh
 

@@ -48,6 +48,7 @@ public class Member extends AuditableEntity {
     @Column(length = 30)
     private String nickname;
     private String profilePath;
+
     @Column(nullable = false)
     private boolean privateAccount;
 

@@ -32,3 +32,8 @@ jwt:
   access-exp-seconds: ${JWT_ACCESS_EXPIRATION_SECONDS}
   refresh-exp-seconds: ${JWT_REFRESH_EXPIRATION_SECONDS:1209600}
   issuer: ${JWT_ISSUER}
+
+# Firebase FCM — 키 파일: src/main/resources/libri-firebase.json
+firebase:
+  enabled: ${FIREBASE_ENABLED:true}
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH:classpath:libri-firebase.json}

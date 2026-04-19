@@ -1,4 +1,4 @@
-package monochrome.libri.follow.domain;
+package monochrome.libri.review.domain;
 
 import static com.querydsl.core.types.PathMetadataFactory.*;
 
@@ -11,16 +11,16 @@ import com.querydsl.core.types.dsl.PathInits;
 
 
 /**
- * QFollow is a Querydsl query type for Follow
+ * QReviewBookmark is a Querydsl query type for ReviewBookmark
  */
 @Generated("com.querydsl.codegen.DefaultEntitySerializer")
-public class QFollow extends EntityPathBase<Follow> {
+public class QReviewBookmark extends EntityPathBase<ReviewBookmark> {
 
-    private static final long serialVersionUID = 1726751073L;
+    private static final long serialVersionUID = 968151749L;
 
     private static final PathInits INITS = PathInits.DIRECT2;
 
-    public static final QFollow follow = new QFollow("follow");
+    public static final QReviewBookmark reviewBookmark = new QReviewBookmark("reviewBookmark");
 
     public final monochrome.libri.global.domain.QAuditableEntity _super = new monochrome.libri.global.domain.QAuditableEntity(this);
 
@@ -30,12 +30,6 @@ public class QFollow extends EntityPathBase<Follow> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> createdDate = _super.createdDate;
 
-    public final monochrome.libri.member.domain.QMember follower;
-
-    public final monochrome.libri.member.domain.QMember following;
-
-    public final EnumPath<FollowStatus> followStatus = createEnum("followStatus", FollowStatus.class);
-
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
     //inherited
@@ -44,26 +38,30 @@ public class QFollow extends EntityPathBase<Follow> {
     //inherited
     public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;
 
-    public QFollow(String variable) {
-        this(Follow.class, forVariable(variable), INITS);
+    public final monochrome.libri.member.domain.QMember member;
+
+    public final QReview review;
+
+    public QReviewBookmark(String variable) {
+        this(ReviewBookmark.class, forVariable(variable), INITS);
     }
 
-    public QFollow(Path<? extends Follow> path) {
+    public QReviewBookmark(Path<? extends ReviewBookmark> path) {
         this(path.getType(), path.getMetadata(), PathInits.getFor(path.getMetadata(), INITS));
     }
 
-    public QFollow(PathMetadata metadata) {
+    public QReviewBookmark(PathMetadata metadata) {
         this(metadata, PathInits.getFor(metadata, INITS));
     }
 
-    public QFollow(PathMetadata metadata, PathInits inits) {
-        this(Follow.class, metadata, inits);
+    public QReviewBookmark(PathMetadata metadata, PathInits inits) {
+        this(ReviewBookmark.class, metadata, inits);
     }
 
-    public QFollow(Class<? extends Follow> type, PathMetadata metadata, PathInits inits) {
+    public QReviewBookmark(Class<? extends ReviewBookmark> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
-        this.follower = inits.isInitialized("follower") ? new monochrome.libri.member.domain.QMember(forProperty("follower")) : null;
-        this.following = inits.isInitialized("following") ? new monochrome.libri.member.domain.QMember(forProperty("following")) : null;
+        this.member = inits.isInitialized("member") ? new monochrome.libri.member.domain.QMember(forProperty("member")) : null;
+        this.review = inits.isInitialized("review") ? new QReview(forProperty("review"), inits.get("review")) : null;
     }
 
 }

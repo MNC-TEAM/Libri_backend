@@ -54,15 +54,21 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 	// springdoc-openapi (Spring Boot 3.x = jakarta)
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
 
-	// Querydsl (Spring Boot 3.x = jakarta)
+	// Firebase Admin (FCM) — monochrome.libri.firebase 패키지
+	implementation 'com.google.firebase:firebase-admin:9.5.0'
+
+	// Querydsl (Spring Boot 3.x = jakarta) — Lombok 다음에 querydsl-apt 두는 것이 Q타입 생성에 안전
 	implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
 	annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"
 	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+	// firebase.* 등 커스텀 설정 메타데이터(IDE). Lombok/Querydsl 뒤에 두어 APT 순서 충돌을 피함
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
