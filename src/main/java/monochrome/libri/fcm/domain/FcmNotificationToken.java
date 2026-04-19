@@ -1,4 +1,4 @@
-package monochrome.libri.member.domain;
+package monochrome.libri.fcm.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import monochrome.libri.global.domain.AuditableEntity;
+import monochrome.libri.member.domain.Member;
 
 import java.time.LocalDateTime;
 
@@ -35,7 +36,6 @@ public class FcmNotificationToken extends AuditableEntity {
     @Column(nullable = false, length = 512)
     private String token;
 
-    /** 마지막 사용 시각(등록·갱신 시 갱신, 오래된 토큰 정리 등에 활용) */
     @Column(name = "last_used_date", nullable = false)
     private LocalDateTime lastUsedDate;
 

@@ -1,6 +1,6 @@
-package monochrome.libri.member.repository;
+package monochrome.libri.fcm.repository;
 
-import monochrome.libri.member.domain.FcmNotificationToken;
+import monochrome.libri.fcm.domain.FcmNotificationToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

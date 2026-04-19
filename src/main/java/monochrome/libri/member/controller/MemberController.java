@@ -5,7 +5,6 @@ import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.response.ApiResponse;
 import monochrome.libri.global.security.UserPrincipal;
 import monochrome.libri.global.swagger.ApiErrorCodes;
-import monochrome.libri.member.dto.request.FcmRegistrationTokenRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.request.NicknameUpdateRequestDto;
 import monochrome.libri.member.dto.request.PrivacyUpdateRequestDto;
@@ -138,27 +137,5 @@ public class MemberController {
         );
         var updated = memberService.updateMember(userPrincipal.getMemberId(), updateRequest);
         return ResponseEntity.ok(ApiResponse.ok(MemberResponseDto.from(updated)));
-    }
-
-    @PatchMapping("/me/fcm-token")
-    @Operation(
-            summary = "FCM 등록 토큰 저장",
-            description = "푸시 수신용 FCM 등록 토큰을 저장합니다. token을 비우면 삭제됩니다."
-    )
-    @ApiErrorCodes({
-            ErrorCode.AUTHENTICATION_FAILED,
-            ErrorCode.MEMBER_NOT_FOUND,
-            ErrorCode.INVALID_INPUT_VALUE
-    })
-    public ResponseEntity<ApiResponse<Void>> updateFcmRegistrationToken(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @Valid @RequestBody(required = false) FcmRegistrationTokenRequestDto request
-    ) {
-        if (userPrincipal == null) {
-            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
-        }
-        String token = request != null ? request.token() : null;
-        memberService.updateFcmRegistrationToken(userPrincipal.getMemberId(), token);
-        return ResponseEntity.ok(ApiResponse.ok());
     }
 }

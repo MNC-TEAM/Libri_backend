@@ -6,7 +6,7 @@ import com.google.firebase.FirebaseOptions;
 import monochrome.libri.firebase.FcmPushSender;
 import monochrome.libri.firebase.FirebaseFcmPushSender;
 import monochrome.libri.firebase.FirebaseProperties;
-import monochrome.libri.member.repository.FcmNotificationTokenRepository;
+import monochrome.libri.fcm.repository.FcmNotificationTokenRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;

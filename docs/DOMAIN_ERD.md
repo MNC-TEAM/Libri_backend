@@ -7,7 +7,7 @@ JPA `@Entity` 기준으로 `src/main/java` 하위 도메인을 정리했습니�
 | 엔티티 | 테이블명(명시/기본) | 패키지 |
 |--------|---------------------|--------|
 | Member | `member` | `member.domain` |
-| FcmNotificationToken | `fcm_notification_token` | `member.domain` |
+| FcmNotificationToken | `fcm_notification_token` | `fcm.domain` |
 | Book | `book` (기본) | `book.domain` |
 | Shelf | `shelf` | `shelf.domain` |
 | Note | `note` | `note.domain` |
