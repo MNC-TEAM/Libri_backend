@@ -4,15 +4,21 @@ import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.storage.config.S3Properties;
 import monochrome.libri.storage.dto.request.PresignedUploadRequestDto;
+import monochrome.libri.storage.dto.response.PresignedDownloadResponseDto;
 import monochrome.libri.storage.dto.response.PresignedUploadResponseDto;
 import monochrome.libri.storage.service.PresignedUploadService;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
+import java.net.URI;
 import java.net.URLEncoder;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Set;
@@ -77,6 +83,36 @@ public class PresignedUploadServiceImpl implements PresignedUploadService {
         );
     }
 
+    @Override
+    public PresignedDownloadResponseDto createPresignedDownloadUrl(long memberId, String fileUrl) {
+        if (memberId <= 0) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        if (fileUrl == null || fileUrl.isBlank()) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (s3Properties.bucket() == null || s3Properties.bucket().isBlank()) {
+            throw new LibriException(ErrorCode.S3_CONFIGURATION_MISSING);
+        }
+
+        String key = extractObjectKey(fileUrl.trim());
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(s3Properties.bucket())
+                .key(key)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofSeconds(s3Properties.uploadExpirationSeconds()))
+                .getObjectRequest(getObjectRequest)
+                .build();
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+
+        return new PresignedDownloadResponseDto(
+                presignedRequest.url().toString(),
+                key,
+                s3Properties.uploadExpirationSeconds()
+        );
+    }
+
     private String buildObjectKey(String directory, long memberId, String fileName) {
         String extension = extractExtension(fileName);
         return directory + "/" + memberId + "/" + UUID.randomUUID() + extension;
@@ -96,6 +132,20 @@ public class PresignedUploadServiceImpl implements PresignedUploadService {
             return trimTrailingSlash(s3Properties.publicBaseUrl()) + "/" + encodedKey;
         }
         return "https://" + s3Properties.bucket() + ".s3." + s3Properties.region() + ".amazonaws.com/" + encodedKey;
+    }
+
+    private String extractObjectKey(String fileUrl) {
+        try {
+            URI uri = URI.create(fileUrl);
+            String path = uri.getPath();
+            if (path == null || path.isBlank() || "/".equals(path)) {
+                throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+            String key = path.startsWith("/") ? path.substring(1) : path;
+            return URLDecoder.decode(key, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 
     private String trimTrailingSlash(String value) {
