@@ -11,16 +11,24 @@ public record MemberResponseDto(
     String email,
     String nickname,
     String profilePath,
-    boolean privateAccount
+    boolean privateAccount,
+    long followerCount,
+    long followingCount
 ) {
     public static MemberResponseDto from(Member member) {
+        return from(member, 0L, 0L);
+    }
+
+    public static MemberResponseDto from(Member member, long followerCount, long followingCount) {
         return new MemberResponseDto(
                 member.getId(),
                 member.getProvider(),
                 member.getEmail(),
                 member.getNickname(),
                 member.getProfilePath(),
-                member.isPrivateAccount()
+                member.isPrivateAccount(),
+                followerCount,
+                followingCount
         );
     }
 }

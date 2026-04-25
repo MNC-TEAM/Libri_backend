@@ -1,6 +1,8 @@
 package monochrome.libri.home.service;
 
 import monochrome.libri.TestFixtures;
+import monochrome.libri.book.domain.Book;
+import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.home.dto.response.HomeResponseDto;
@@ -33,9 +35,12 @@ class HomeServiceImplTest {
         MemberService memberService = mock(MemberService.class);
         FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        BookRepository bookRepository = mock(BookRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, clock);
+        when(bookRepository.findRecommendedBooks(null, 3)).thenReturn(List.of());
+
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, clock);
 
         HomeResponseDto response = service.getHome(null);
 
@@ -51,6 +56,7 @@ class HomeServiceImplTest {
         MemberService memberService = mock(MemberService.class);
         FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        BookRepository bookRepository = mock(BookRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
         Member member = TestFixtures.member(1L);
@@ -77,14 +83,20 @@ class HomeServiceImplTest {
                 .thenReturn(List.of());
         when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.FINISHED), eq(3)))
                 .thenReturn(List.of());
+        when(bookRepository.findRecommendedBooks(1L, 3))
+                .thenReturn(List.of(TestFixtures.book(30L, 320)));
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, clock);
         HomeResponseDto response = service.getHome(1L);
 
         assertThat(response.me().followerCount()).isEqualTo(4);
         assertThat(response.me().followingCount()).isEqualTo(7);
+        assertThat(response.me().unreadNotiCount()).isEqualTo(6);
         assertThat(response.shelfSummary().wantToReadCount()).isEqualTo(1);
         assertThat(response.readingBooks()).hasSize(1);
+        assertThat(response.recommendations()).hasSize(1);
+        assertThat(response.recommendations().get(0).bookId()).isEqualTo(30L);
+        assertThat(response.recommendations().get(0).badgeText()).isEqualTo("리뷰 인기");
         HomeResponseDto.ReadingBook book = response.readingBooks().get(0);
         assertThat(book.progressPercent()).isEqualTo(25);
         assertThat(book.readingDays()).isEqualTo(3);
@@ -95,6 +107,7 @@ class HomeServiceImplTest {
         MemberService memberService = mock(MemberService.class);
         FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        BookRepository bookRepository = mock(BookRepository.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
         Member member = TestFixtures.member(1L);
@@ -121,11 +134,13 @@ class HomeServiceImplTest {
                 .thenReturn(List.of());
         when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.FINISHED), eq(3)))
                 .thenReturn(List.of());
+        when(bookRepository.findRecommendedBooks(1L, 3)).thenReturn(List.of());
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, clock);
         HomeResponseDto response = service.getHome(1L);
 
         assertThat(response.readingBooks()).hasSize(1);
         assertThat(response.readingBooks().get(0).progressPercent()).isEqualTo(25);
+        assertThat(response.me().unreadNotiCount()).isEqualTo(1);
     }
 }

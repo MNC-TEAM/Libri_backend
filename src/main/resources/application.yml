@@ -32,3 +32,10 @@ jwt:
   access-exp-seconds: ${JWT_ACCESS_EXPIRATION_SECONDS}
   refresh-exp-seconds: ${JWT_REFRESH_EXPIRATION_SECONDS:1209600}
   issuer: ${JWT_ISSUER}
+
+app:
+  s3:
+    region: ${AWS_REGION:ap-northeast-2}
+    bucket: ${AWS_S3_BUCKET:}
+    public-base-url: ${AWS_S3_PUBLIC_BASE_URL:}
+    upload-expiration-seconds: ${AWS_S3_UPLOAD_EXPIRATION_SECONDS:300}

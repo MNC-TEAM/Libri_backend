@@ -120,6 +120,33 @@ class InquiryServiceImplTest {
         assertThat(response.totalCount()).isEqualTo(1L);
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).memberId()).isEqualTo(1L);
+        assertThat(response.content().get(0).contentPreview()).isEqualTo("content");
+    }
+
+    @Test
+    void getAllInquiries_summarizesLongContent() {
+        InquiryRepository inquiryRepository = mock(InquiryRepository.class);
+        MemberService memberService = mock(MemberService.class);
+        InquiryServiceImpl service = new InquiryServiceImpl(inquiryRepository, memberService);
+
+        Member owner = member(1L, Role.USER);
+        Member admin = member(99L, Role.ADMIN);
+        Inquiry inquiry = Inquiry.builder()
+                .id(10L)
+                .member(owner)
+                .title("title")
+                .content("0123456789012345678901234567890123456789EXTRA")
+                .status(InquiryStatus.PENDING)
+                .build();
+
+        when(memberService.getMemberById(99L)).thenReturn(Optional.of(admin));
+        when(inquiryRepository.findAll(any(PageRequest.class)))
+                .thenReturn(new PageImpl<>(List.of(inquiry), PageRequest.of(0, 20), 1));
+        when(inquiryRepository.count()).thenReturn(1L);
+
+        var response = service.getAllInquiries(99L, PageRequest.of(0, 20));
+
+        assertThat(response.content().get(0).contentPreview()).isEqualTo("0123456789012345678901234567890123456789...");
     }
 
     @Test

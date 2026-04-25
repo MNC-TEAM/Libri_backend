@@ -1,14 +1,22 @@
 package monochrome.libri.shelf.repository;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import monochrome.libri.book.domain.QBook;
 import monochrome.libri.shelf.domain.QShelf;
 import monochrome.libri.shelf.domain.ShelfStatus;
+import monochrome.libri.shelf.dto.MonthCountRow;
+import monochrome.libri.shelf.dto.ShelfCalendarRow;
 import monochrome.libri.shelf.dto.ShelfBookRow;
+import monochrome.libri.shelf.dto.YearCountRow;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public class ShelfRepositoryCustomImpl implements ShelfRepositoryCustom {
 
@@ -84,6 +92,78 @@ public class ShelfRepositoryCustomImpl implements ShelfRepositoryCustom {
                 )
                 .orderBy(s.id.desc())
                 .limit(limit)
+                .fetch();
+    }
+
+    @Override
+    public List<ShelfCalendarRow> findCalendarRowsByMemberIdAndDateRange(long memberId, LocalDate from, LocalDate to) {
+        QShelf s = QShelf.shelf;
+        QBook b = QBook.book;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        ShelfCalendarRow.class,
+                        s.id,
+                        b.id,
+                        b.title,
+                        b.coverImageUrl,
+                        s.startDate,
+                        s.endDate,
+                        s.status
+                ))
+                .from(s)
+                .join(s.book, b)
+                .where(
+                        s.member.id.eq(memberId),
+                        s.startDate.between(from, to)
+                                .or(s.status.eq(ShelfStatus.FINISHED).and(s.endDate.between(from, to)))
+                )
+                .fetch();
+    }
+
+    @Override
+    public List<YearCountRow> countFinishedBooksByYear(long memberId) {
+        QShelf s = QShelf.shelf;
+        NumberTemplate<Integer> yearExpr = Expressions.numberTemplate(Integer.class, "year({0})", s.endDate);
+
+        return queryFactory
+                .select(Projections.constructor(
+                        YearCountRow.class,
+                        yearExpr,
+                        s.id.count()
+                ))
+                .from(s)
+                .where(
+                        s.member.id.eq(memberId),
+                        s.status.eq(ShelfStatus.FINISHED),
+                        s.endDate.isNotNull()
+                )
+                .groupBy(yearExpr)
+                .orderBy(yearExpr.asc())
+                .fetch();
+    }
+
+    @Override
+    public List<MonthCountRow> countFinishedBooksByMonth(long memberId, int year) {
+        QShelf s = QShelf.shelf;
+        NumberTemplate<Integer> yearExpr = Expressions.numberTemplate(Integer.class, "year({0})", s.endDate);
+        NumberTemplate<Integer> monthExpr = Expressions.numberTemplate(Integer.class, "month({0})", s.endDate);
+
+        return queryFactory
+                .select(Projections.constructor(
+                        MonthCountRow.class,
+                        monthExpr,
+                        s.id.count()
+                ))
+                .from(s)
+                .where(
+                        s.member.id.eq(memberId),
+                        s.status.eq(ShelfStatus.FINISHED),
+                        s.endDate.isNotNull(),
+                        yearExpr.eq(year)
+                )
+                .groupBy(monthExpr)
+                .orderBy(monthExpr.asc())
                 .fetch();
     }
 }

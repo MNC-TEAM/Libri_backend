@@ -134,6 +134,7 @@ public class BookServiceImpl implements BookService {
                 book.getAuthor(),
                 book.getPublisher(),
                 book.getReleaseDate(),
+                book.getTotalPage(),
                 book.getCoverImageUrl(),
                 book.getIntroduction(),
                 shelfInfo,

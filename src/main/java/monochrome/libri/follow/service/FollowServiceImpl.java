@@ -1,5 +1,6 @@
 package monochrome.libri.follow.service;
 
+import monochrome.libri.block.service.BlockService;
 import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.follow.domain.Follow;
 import monochrome.libri.follow.domain.FollowStatus;
@@ -21,10 +22,12 @@ public class FollowServiceImpl implements FollowService{
 
     private final FollowRepository followRepository;
     private final MemberService memberService;
+    private final BlockService blockService;
 
-    public FollowServiceImpl(FollowRepository followRepository, MemberService memberService) {
+    public FollowServiceImpl(FollowRepository followRepository, MemberService memberService, BlockService blockService) {
         this.followRepository = followRepository;
         this.memberService = memberService;
+        this.blockService = blockService;
     }
 
     // ************* 내부 메서드 *************
@@ -56,6 +59,9 @@ public class FollowServiceImpl implements FollowService{
     @Transactional
     public void follow(Long followerMemberId, Long followingMemberId) {
         validateNotSelf(followerMemberId, followingMemberId);
+        if (blockService.hasBlockRelation(followerMemberId, followingMemberId)) {
+            throw new LibriException(ErrorCode.ACCESS_DENIED);
+        }
 
         Member follower = getMemberOrThrow(followerMemberId);
         Member following = getMemberOrThrow(followingMemberId);
