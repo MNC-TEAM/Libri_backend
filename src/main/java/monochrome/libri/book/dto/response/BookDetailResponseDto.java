@@ -13,6 +13,7 @@ public record BookDetailResponseDto(
         String author,
         String publisher,
         LocalDate releaseDate,
+        int totalPage,
         String coverUrl,
         String introduction,
         ShelfInfo shelf,

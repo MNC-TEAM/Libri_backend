@@ -2,6 +2,7 @@ package monochrome.libri.comment.controller;
 
 import jakarta.validation.Valid;
 import monochrome.libri.comment.dto.request.CommentCreateRequestDto;
+import monochrome.libri.comment.dto.request.CommentReportCreateRequestDto;
 import monochrome.libri.comment.dto.response.CommentSliceResponseDto;
 import monochrome.libri.comment.service.NoteCommentService;
 import monochrome.libri.global.exception.ErrorCode;
@@ -83,6 +84,30 @@ public class NoteCommentController {
     ) {
         long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
         commentService.createComment(noteId, memberId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok());
+    }
+
+    @PostMapping("/{commentId}/reports")
+    @Operation(
+            summary = "노트 댓글 신고",
+            description = "댓글을 신고합니다. 같은 댓글은 한 번만 신고할 수 있습니다."
+    )
+    @SecurityRequirement(name = "BearerAuth")
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.COMMENT_NOT_FOUND,
+            ErrorCode.COMMENT_REPORT_ALREADY_EXISTS,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<Void>> reportComment(
+            @PathVariable long noteId,
+            @PathVariable long commentId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody CommentReportCreateRequestDto request
+    ) {
+        long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
+        commentService.reportComment(noteId, commentId, memberId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok());
     }
 

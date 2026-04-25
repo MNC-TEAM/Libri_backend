@@ -9,6 +9,7 @@ public record InquiryListItemResponseDto(
         long memberId,
         String memberNickname,
         String title,
+        String contentPreview,
         InquiryStatus status,
         LocalDateTime answeredAt,
         LocalDateTime createdAt

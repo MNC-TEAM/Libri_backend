@@ -26,6 +26,7 @@ import java.util.List;
 @Service
 @Transactional(readOnly = true)
 public class InquiryServiceImpl implements InquiryService {
+    private static final int INQUIRY_PREVIEW_LENGTH = 40;
 
     private final InquiryRepository inquiryRepository;
     private final MemberService memberService;
@@ -123,11 +124,24 @@ public class InquiryServiceImpl implements InquiryService {
                         inquiry.getMember().getId(),
                         inquiry.getMember().getNickname(),
                         inquiry.getTitle(),
+                        summarizeContent(inquiry.getContent()),
                         inquiry.getStatus(),
                         inquiry.getAnsweredAt(),
                         inquiry.getCreatedDate()
                 ))
                 .toList();
+    }
+
+    private String summarizeContent(String content) {
+        if (content == null) {
+            return "";
+        }
+
+        String normalized = content.trim().replaceAll("\\s+", " ");
+        if (normalized.length() <= INQUIRY_PREVIEW_LENGTH) {
+            return normalized;
+        }
+        return normalized.substring(0, INQUIRY_PREVIEW_LENGTH) + "...";
     }
 
     private Member getMemberOrThrow(long memberId) {

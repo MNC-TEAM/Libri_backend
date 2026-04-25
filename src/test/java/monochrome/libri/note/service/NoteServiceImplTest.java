@@ -1,6 +1,7 @@
 package monochrome.libri.note.service;
 
 import monochrome.libri.TestFixtures;
+import monochrome.libri.block.service.BlockService;
 import monochrome.libri.comment.repository.NoteCommentRepository;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
@@ -51,6 +52,9 @@ class NoteServiceImplTest {
     @Mock
     private NoteCommentRepository noteCommentRepository;
 
+    @Mock
+    private BlockService blockService;
+
     @InjectMocks
     private monochrome.libri.note.service.impl.NoteServiceImpl service;
 
@@ -82,6 +86,20 @@ class NoteServiceImplTest {
         Note note = TestFixtures.note(10L, shelf, owner, true);
 
         when(noteRepository.findWithBookById(10L)).thenReturn(Optional.of(note));
+        when(blockService.hasBlockRelation(999L, 1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.getNoteDetail(10L, 999L))
+                .isInstanceOf(LibriException.class);
+    }
+
+    @Test
+    void getNoteDetail_deniesBlockedMember() {
+        Member owner = TestFixtures.member(1L);
+        Shelf shelf = TestFixtures.shelf(2L, owner, TestFixtures.book(3L, 100));
+        Note note = TestFixtures.note(10L, shelf, owner, false);
+
+        when(noteRepository.findWithBookById(10L)).thenReturn(Optional.of(note));
+        when(blockService.hasBlockRelation(999L, 1L)).thenReturn(true);
 
         assertThatThrownBy(() -> service.getNoteDetail(10L, 999L))
                 .isInstanceOf(LibriException.class);

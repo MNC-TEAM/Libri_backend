@@ -2,6 +2,9 @@ package monochrome.libri.member.service;
 
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
+import monochrome.libri.member.dto.response.MemberPrivacyResponseDto;
+import monochrome.libri.member.dto.response.MemberProfileResponseDto;
+import monochrome.libri.member.dto.response.MemberResponseDto;
 
 import java.util.Optional;
 
@@ -13,6 +16,12 @@ public interface MemberService {
      * @return 수정된 Member 엔티티
      */
     Member updateMember(long memberId, MemberUpdateRequestDto memberUpdateRequestDto);
+
+    MemberResponseDto getMyProfile(long memberId);
+
+    MemberPrivacyResponseDto getMyPrivacy(long memberId);
+
+    MemberProfileResponseDto getMemberProfile(Long actorMemberId, long targetMemberId);
 
     /**
      * ID로 회원 조회

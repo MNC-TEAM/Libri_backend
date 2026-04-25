@@ -10,6 +10,7 @@ public enum ErrorCode {
     // 공통
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C001", "서버 에러가 발생했습니다."),
     INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C002", "잘못된 요청입니다."),
+    S3_CONFIGURATION_MISSING(HttpStatus.INTERNAL_SERVER_ERROR, "C003", "S3 설정이 누락되었습니다."),
 
     // 인증/인가 관련
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "A001", "인증에 실패했습니다."),
@@ -26,6 +27,7 @@ public enum ErrorCode {
     SHELF_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "책장 정보를 찾을 수 없습니다."),
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "노트를 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "N002", "댓글을 찾을 수 없습니다."),
+    COMMENT_REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "N003", "이미 신고한 댓글입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "공지사항을 찾을 수 없습니다."),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "문의 내역을 찾을 수 없습니다."),
@@ -34,7 +36,12 @@ public enum ErrorCode {
     EXIST_FOLLOW_RELATION(HttpStatus.CONFLICT, "F001", "이미 팔로우한 회원입니다."),
     SELF_FOLLOW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "F002", "자기 자신은 팔로우할 수 없습니다."),
     FOLLOW_NOT_FOUND(HttpStatus.NOT_FOUND, "F003", "팔로우 관계를 찾을 수 없습니다."),
-    ALREADY_UNFOLLOWED(HttpStatus.BAD_REQUEST, "F004", "이미 언팔로우한 상태입니다.")
+    ALREADY_UNFOLLOWED(HttpStatus.BAD_REQUEST, "F004", "이미 언팔로우한 상태입니다."),
+
+    // 차단
+    BLOCK_ALREADY_EXISTS(HttpStatus.CONFLICT, "K001", "이미 차단한 회원입니다."),
+    SELF_BLOCK_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "K002", "자기 자신은 차단할 수 없습니다."),
+    BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "K003", "차단 관계를 찾을 수 없습니다.")
     ;
 
     private final HttpStatus httpStatus;

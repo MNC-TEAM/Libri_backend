@@ -22,6 +22,9 @@ public interface NoteCommentRepository extends JpaRepository<NoteComment, Long> 
 
     Optional<NoteComment> findByIdAndNoteId(long commentId, long noteId);
 
+    @EntityGraph(attributePaths = {"note", "note.member", "member"})
+    Optional<NoteComment> findWithNoteAndMemberByIdAndNoteId(long commentId, long noteId);
+
     @Query("select nc.note.id as noteId, count(nc) as count " +
             "from NoteComment nc where nc.note.id in :noteIds group by nc.note.id")
     List<NoteCommentCountRow> countByNoteIds(@Param("noteIds") Collection<Long> noteIds);
