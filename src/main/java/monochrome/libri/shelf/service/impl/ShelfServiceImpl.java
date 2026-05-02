@@ -8,6 +8,9 @@ import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
 import monochrome.libri.review.service.ReviewService;
 import monochrome.libri.shelf.domain.Shelf;
+import monochrome.libri.shelf.domain.ShelfStatus;
+import monochrome.libri.shelf.dto.response.ReadingCalendarResponseDto;
+import monochrome.libri.shelf.dto.response.ReadingStatisticsResponseDto;
 import monochrome.libri.shelf.dto.response.ShelfDetailResponseDto;
 import monochrome.libri.shelf.dto.response.ShelfListItemResponseDto;
 import monochrome.libri.shelf.dto.response.ShelfListResponseDto;
@@ -22,8 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -81,6 +88,100 @@ public class ShelfServiceImpl implements ShelfService {
                 slice.hasNext(),
                 slice.getNumber(),
                 slice.getSize()
+        );
+    }
+
+    @Override
+    public ReadingCalendarResponseDto getReadingCalendar(long memberId, YearMonth yearMonth) {
+        if (memberId <= 0) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        LocalDate from = yearMonth.atDay(1);
+        LocalDate to = yearMonth.atEndOfMonth();
+        var rows = shelfRepository.findCalendarRowsByMemberIdAndDateRange(memberId, from, to);
+        Map<LocalDate, List<ReadingCalendarResponseDto.BookEvent>> startedByDate = new HashMap<>();
+        Map<LocalDate, List<ReadingCalendarResponseDto.BookEvent>> finishedByDate = new HashMap<>();
+
+        for (var row : rows) {
+            ReadingCalendarResponseDto.BookEvent event = new ReadingCalendarResponseDto.BookEvent(
+                    row.shelfId(),
+                    row.bookId(),
+                    row.title(),
+                    row.coverUrl()
+            );
+            if (row.startDate() != null && !row.startDate().isBefore(from) && !row.startDate().isAfter(to)) {
+                startedByDate.computeIfAbsent(row.startDate(), ignored -> new ArrayList<>()).add(event);
+            }
+            if (row.status() == ShelfStatus.FINISHED
+                    && row.endDate() != null
+                    && !row.endDate().isBefore(from)
+                    && !row.endDate().isAfter(to)) {
+                finishedByDate.computeIfAbsent(row.endDate(), ignored -> new ArrayList<>()).add(event);
+            }
+        }
+
+        List<ReadingCalendarResponseDto.CalendarDay> days = new ArrayList<>();
+        for (LocalDate date = from; !date.isAfter(to); date = date.plusDays(1)) {
+            days.add(new ReadingCalendarResponseDto.CalendarDay(
+                    date,
+                    startedByDate.getOrDefault(date, List.of()),
+                    finishedByDate.getOrDefault(date, List.of())
+            ));
+        }
+
+        return new ReadingCalendarResponseDto(yearMonth.getYear(), yearMonth.getMonthValue(), days);
+    }
+
+    @Override
+    public ReadingStatisticsResponseDto getReadingStatistics(long memberId, int year) {
+        if (memberId <= 0) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        LocalDate from = LocalDate.of(year, 1, 1);
+        LocalDate to = LocalDate.of(year, 12, 31);
+
+        long totalStartedCount = shelfRepository.countByMemberIdAndStartDateBetween(memberId, from, to);
+        long totalFinishedCount = shelfRepository.countByMemberIdAndStatusAndEndDateBetween(
+                memberId,
+                ShelfStatus.FINISHED,
+                from,
+                to
+        );
+
+        List<ReadingStatisticsResponseDto.YearlyCount> yearlyFinishedCounts = shelfRepository.countFinishedBooksByYear(memberId)
+                .stream()
+                .map(row -> new ReadingStatisticsResponseDto.YearlyCount(
+                        row.year() == null ? year : row.year(),
+                        row.count() == null ? 0L : row.count()
+                ))
+                .toList();
+
+        Map<Integer, Long> monthlyFinishedMap = new HashMap<>();
+        for (var row : shelfRepository.countFinishedBooksByMonth(memberId, year)) {
+            if (row.month() != null) {
+                monthlyFinishedMap.put(row.month(), row.count() == null ? 0L : row.count());
+            }
+        }
+
+        List<ReadingStatisticsResponseDto.MonthlyCount> monthlyFinishedCounts = new ArrayList<>();
+        List<ReadingStatisticsResponseDto.MonthlyCount> monthlyCumulativeFinishedCounts = new ArrayList<>();
+        long cumulative = 0L;
+        for (int month = 1; month <= 12; month++) {
+            long count = monthlyFinishedMap.getOrDefault(month, 0L);
+            cumulative += count;
+            monthlyFinishedCounts.add(new ReadingStatisticsResponseDto.MonthlyCount(month, count));
+            monthlyCumulativeFinishedCounts.add(new ReadingStatisticsResponseDto.MonthlyCount(month, cumulative));
+        }
+
+        return new ReadingStatisticsResponseDto(
+                year,
+                totalStartedCount,
+                totalFinishedCount,
+                yearlyFinishedCounts,
+                monthlyFinishedCounts,
+                monthlyCumulativeFinishedCounts
         );
     }
 

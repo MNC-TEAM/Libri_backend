@@ -15,12 +15,13 @@ import monochrome.libri.shelf.dto.request.ShelfCreateRequestDto;
 import monochrome.libri.shelf.dto.request.ShelfUpdateRequestDto;
 import monochrome.libri.shelf.repository.ShelfRepository;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -211,5 +212,76 @@ class ShelfServiceImplTest {
 
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).progressPercent()).isEqualTo(20);
+    }
+
+    @Test
+    void getReadingCalendar_returnsStartedAndFinishedBooksByDay() {
+        ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        ReviewService reviewService = mock(ReviewService.class);
+        MemberService memberService = mock(MemberService.class);
+        BookRepository bookRepository = mock(BookRepository.class);
+        Clock clock = Clock.fixed(Instant.parse("2024-03-10T00:00:00Z"), ZoneOffset.UTC);
+        ShelfServiceImpl service = new ShelfServiceImpl(shelfRepository, reviewService, memberService, bookRepository, clock);
+
+        when(shelfRepository.findCalendarRowsByMemberIdAndDateRange(
+                1L,
+                LocalDate.of(2024, 3, 1),
+                LocalDate.of(2024, 3, 31)
+        )).thenReturn(List.of(
+                new monochrome.libri.shelf.dto.ShelfCalendarRow(
+                        10L,
+                        20L,
+                        "title",
+                        "/cover",
+                        LocalDate.of(2024, 3, 5),
+                        LocalDate.of(2024, 3, 20),
+                        ShelfStatus.FINISHED
+                )
+        ));
+
+        var response = service.getReadingCalendar(1L, YearMonth.of(2024, 3));
+
+        assertThat(response.days()).hasSize(31);
+        assertThat(response.days().get(4).startedBooks()).hasSize(1);
+        assertThat(response.days().get(19).finishedBooks()).hasSize(1);
+        assertThat(response.days().get(4).startedBooks().get(0).coverUrl()).isEqualTo("/cover");
+    }
+
+    @Test
+    void getReadingStatistics_returnsYearlyAndMonthlyCounts() {
+        ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        ReviewService reviewService = mock(ReviewService.class);
+        MemberService memberService = mock(MemberService.class);
+        BookRepository bookRepository = mock(BookRepository.class);
+        Clock clock = Clock.fixed(Instant.parse("2024-03-10T00:00:00Z"), ZoneOffset.UTC);
+        ShelfServiceImpl service = new ShelfServiceImpl(shelfRepository, reviewService, memberService, bookRepository, clock);
+
+        when(shelfRepository.countByMemberIdAndStartDateBetween(
+                1L,
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 12, 31)
+        )).thenReturn(4L);
+        when(shelfRepository.countByMemberIdAndStatusAndEndDateBetween(
+                1L,
+                ShelfStatus.FINISHED,
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 12, 31)
+        )).thenReturn(3L);
+        when(shelfRepository.countFinishedBooksByYear(1L)).thenReturn(List.of(
+                new monochrome.libri.shelf.dto.YearCountRow(2023, 2L),
+                new monochrome.libri.shelf.dto.YearCountRow(2024, 3L)
+        ));
+        when(shelfRepository.countFinishedBooksByMonth(1L, 2024)).thenReturn(List.of(
+                new monochrome.libri.shelf.dto.MonthCountRow(1, 1L),
+                new monochrome.libri.shelf.dto.MonthCountRow(3, 2L)
+        ));
+
+        var response = service.getReadingStatistics(1L, 2024);
+
+        assertThat(response.totalStartedCount()).isEqualTo(4L);
+        assertThat(response.totalFinishedCount()).isEqualTo(3L);
+        assertThat(response.yearlyFinishedCounts()).hasSize(2);
+        assertThat(response.monthlyFinishedCounts().get(0).count()).isEqualTo(1L);
+        assertThat(response.monthlyCumulativeFinishedCounts().get(2).count()).isEqualTo(3L);
     }
 }

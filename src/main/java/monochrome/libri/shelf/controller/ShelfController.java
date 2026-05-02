@@ -14,6 +14,8 @@ import monochrome.libri.note.service.NoteService;
 import monochrome.libri.shelf.domain.ShelfStatus;
 import monochrome.libri.shelf.dto.request.ShelfCreateRequestDto;
 import monochrome.libri.shelf.dto.request.ShelfUpdateRequestDto;
+import monochrome.libri.shelf.dto.response.ReadingCalendarResponseDto;
+import monochrome.libri.shelf.dto.response.ReadingStatisticsResponseDto;
 import monochrome.libri.shelf.dto.response.ShelfDetailResponseDto;
 import monochrome.libri.shelf.dto.response.ShelfListResponseDto;
 import monochrome.libri.shelf.service.ShelfService;
@@ -34,6 +36,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
+
+import java.time.YearMonth;
 
 @RestController
 @RequestMapping("/api/v1/shelves")
@@ -70,6 +74,60 @@ public class ShelfController {
         Pageable pageable = PageRequest.of(page, size);
         Long memberId = userPrincipal == null ? null : userPrincipal.getMemberId();
         ShelfListResponseDto response = shelfService.getShelvesByStatus(memberId, status, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/calendar")
+    @Operation(
+            summary = "독서 달력 조회",
+            description = "선택한 월의 독서 시작/완독 기록을 날짜별 책 표지와 함께 조회합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<ReadingCalendarResponseDto>> getReadingCalendar(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        YearMonth current = YearMonth.now();
+        int resolvedYear = year == null ? current.getYear() : year;
+        int resolvedMonth = month == null ? current.getMonthValue() : month;
+        if (resolvedMonth < 1 || resolvedMonth > 12) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        ReadingCalendarResponseDto response = shelfService.getReadingCalendar(
+                userPrincipal.getMemberId(),
+                YearMonth.of(resolvedYear, resolvedMonth)
+        );
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/statistics")
+    @Operation(
+            summary = "독서 통계 조회",
+            description = "선택한 연도의 총 시작/완독 권수와 월별 완독 수, 누적 완독 수를 조회합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<ReadingStatisticsResponseDto>> getReadingStatistics(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam(required = false) Integer year
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+
+        int resolvedYear = year == null ? YearMonth.now().getYear() : year;
+        ReadingStatisticsResponseDto response = shelfService.getReadingStatistics(userPrincipal.getMemberId(), resolvedYear);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 

@@ -1,5 +1,6 @@
 package monochrome.libri.note.service.impl;
 
+import monochrome.libri.block.service.BlockService;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
@@ -39,6 +40,7 @@ public class NoteServiceImpl implements NoteService {
     private final NoteLikeRepository noteLikeRepository;
     private final NoteBookmarkRepository noteBookmarkRepository;
     private final NoteCommentRepository noteCommentRepository;
+    private final BlockService blockService;
 
     public NoteServiceImpl(
             NoteRepository noteRepository,
@@ -46,7 +48,8 @@ public class NoteServiceImpl implements NoteService {
             MemberService memberService,
             NoteLikeRepository noteLikeRepository,
             NoteBookmarkRepository noteBookmarkRepository,
-            NoteCommentRepository noteCommentRepository
+            NoteCommentRepository noteCommentRepository,
+            BlockService blockService
     ) {
         this.noteRepository = noteRepository;
         this.shelfRepository = shelfRepository;
@@ -54,6 +57,7 @@ public class NoteServiceImpl implements NoteService {
         this.noteLikeRepository = noteLikeRepository;
         this.noteBookmarkRepository = noteBookmarkRepository;
         this.noteCommentRepository = noteCommentRepository;
+        this.blockService = blockService;
     }
 
     @Override
@@ -205,6 +209,9 @@ public class NoteServiceImpl implements NoteService {
                 .orElseThrow(() -> new LibriException(ErrorCode.NOTE_NOT_FOUND));
 
         boolean isOwner = memberId > 0 && note.getMember().getId() == memberId;
+        if (!isOwner && blockService.hasBlockRelation(memberId, note.getMember().getId())) {
+            throw new LibriException(ErrorCode.ACCESS_DENIED);
+        }
         if (note.isSecret() && !isOwner) {
             throw new LibriException(ErrorCode.ACCESS_DENIED);
         }

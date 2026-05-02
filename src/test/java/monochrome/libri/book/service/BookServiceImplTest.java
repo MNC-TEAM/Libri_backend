@@ -92,6 +92,7 @@ class BookServiceImplTest {
         var response = service.getBookDetail(1L, 1L);
 
         assertThat(response.shelf()).isNotNull();
+        assertThat(response.totalPage()).isEqualTo(100);
         assertThat(response.reviews()).hasSize(1);
     }
 

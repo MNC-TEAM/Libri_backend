@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
@@ -19,4 +20,6 @@ public interface ShelfRepository extends JpaRepository<Shelf, Long>, ShelfReposi
     Slice<Shelf> findByMemberIdAndStatusOrderByCreatedDateDesc(long memberId, ShelfStatus status, Pageable pageable);
 
     long countByMemberIdAndStatus(long memberId, ShelfStatus status);
+    long countByMemberIdAndStartDateBetween(long memberId, LocalDate startDate, LocalDate endDate);
+    long countByMemberIdAndStatusAndEndDateBetween(long memberId, ShelfStatus status, LocalDate startDate, LocalDate endDate);
 }

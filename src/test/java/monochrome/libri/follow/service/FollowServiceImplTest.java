@@ -1,6 +1,7 @@
 package monochrome.libri.follow.service;
 
 import monochrome.libri.TestFixtures;
+import monochrome.libri.block.service.BlockService;
 import monochrome.libri.follow.domain.Follow;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.dto.MemberSummaryDto;
@@ -32,6 +33,9 @@ class FollowServiceImplTest {
     @Mock
     private MemberService memberService;
 
+    @Mock
+    private BlockService blockService;
+
     @InjectMocks
     private FollowServiceImpl service;
 
@@ -49,6 +53,7 @@ class FollowServiceImplTest {
 
         when(memberService.getMemberById(1L)).thenReturn(Optional.of(follower));
         when(memberService.getMemberById(2L)).thenReturn(Optional.of(following));
+        when(blockService.hasBlockRelation(1L, 2L)).thenReturn(false);
         when(followRepository.findByFollowerAndFollowing(follower, following)).thenReturn(Optional.of(relation));
 
         service.follow(1L, 2L);
@@ -65,10 +70,20 @@ class FollowServiceImplTest {
 
         when(memberService.getMemberById(1L)).thenReturn(Optional.of(follower));
         when(memberService.getMemberById(2L)).thenReturn(Optional.of(following));
+        when(blockService.hasBlockRelation(1L, 2L)).thenReturn(false);
         when(followRepository.findByFollowerAndFollowing(follower, following)).thenReturn(Optional.of(relation));
 
         assertThatThrownBy(() -> service.follow(1L, 2L))
                 .isInstanceOf(LibriException.class);
+    }
+
+    @Test
+    void follow_throwsWhenBlocked() {
+        when(blockService.hasBlockRelation(1L, 2L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.follow(1L, 2L))
+                .isInstanceOf(LibriException.class);
+        verifyNoInteractions(memberService, followRepository);
     }
 
     @Test

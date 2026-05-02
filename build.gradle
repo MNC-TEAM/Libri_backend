@@ -26,6 +26,7 @@ repositories {
 
 ext {
 	querydslVersion = "5.0.0"
+	awsSdkVersion = "2.30.31"
 }
 
 dependencies {
@@ -69,6 +70,9 @@ dependencies {
 	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
 	// firebase.* 등 커스텀 설정 메타데이터(IDE). Lombok/Querydsl 뒤에 두어 APT 순서 충돌을 피함
 	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+	implementation 'software.amazon.awssdk:s3'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

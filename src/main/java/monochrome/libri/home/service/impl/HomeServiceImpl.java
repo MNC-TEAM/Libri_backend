@@ -1,5 +1,7 @@
 package monochrome.libri.home.service.impl;
 
+import monochrome.libri.book.domain.Book;
+import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.global.exception.ErrorCode;
@@ -25,37 +27,38 @@ import java.util.List;
 public class HomeServiceImpl implements HomeService {
 
     private static final int HOME_BOOK_PREVIEW_LIMIT = 3;
+    private static final int HOME_RECOMMENDATION_LIMIT = 3;
 
     private final MemberService memberService;
     private final FollowRepository followRepository;
     private final ShelfRepository shelfRepository;
+    private final BookRepository bookRepository;
     private final Clock clock;
 
     public HomeServiceImpl(
             MemberService memberService,
             FollowRepository followRepository,
             ShelfRepository shelfRepository,
+            BookRepository bookRepository,
             Clock clock
     ) {
         this.memberService = memberService;
         this.followRepository = followRepository;
         this.shelfRepository = shelfRepository;
+        this.bookRepository = bookRepository;
         this.clock = clock;
     }
 
     @Override
     public HomeResponseDto getHome(Long memberId) {
-        // 사용자 요약
-        HomeResponseDto.MeSummary me = buildMeSummary(memberId);
-
         HomeResponseDto.ShelfSummary shelfSummary = buildShelfSummary(memberId);
+        HomeResponseDto.MeSummary me = buildMeSummary(memberId, shelfSummary);
 
         List<HomeResponseDto.ReadingBook> readingBooks = buildReadingBooks(memberId);
         List<HomeResponseDto.BookSummary> wantToReadBooks = buildBookSummaries(memberId, ShelfStatus.WANT_TO_READ);
         List<HomeResponseDto.BookSummary> finishedBooks = buildBookSummaries(memberId, ShelfStatus.FINISHED);
 
-        // TODO: 도서 추천 로직 구현 예정
-        List<HomeResponseDto.BookRecommendation> recommendations = List.of();
+        List<HomeResponseDto.BookRecommendation> recommendations = buildRecommendations(memberId);
 
         return new HomeResponseDto(
                 me,
@@ -67,7 +70,7 @@ public class HomeServiceImpl implements HomeService {
         );
     }
 
-    private HomeResponseDto.MeSummary buildMeSummary(Long memberId) {
+    private HomeResponseDto.MeSummary buildMeSummary(Long memberId, HomeResponseDto.ShelfSummary shelfSummary) {
         if (memberId == null) {
             return new HomeResponseDto.MeSummary(null, null, null, 0, 0, 0);
         }
@@ -77,14 +80,17 @@ public class HomeServiceImpl implements HomeService {
         long followerCount = followRepository.countByFollowingAndFollowStatus(member, FollowStatus.FOLLOW);
         long followingCount = followRepository.countByFollowerAndFollowStatus(member, FollowStatus.FOLLOW);
 
-        // TODO: 현재 알림 기능이 없으므로 미확인 알림 수는 0으로 설정
+        int totalBookCount = shelfSummary.wantToReadCount()
+                + shelfSummary.finishedCount()
+                + shelfSummary.readingCount();
+
         return new HomeResponseDto.MeSummary(
                 member.getId(),
                 member.getNickname(),
                 member.getProfilePath(),
                 followerCount,
                 followingCount,
-                0
+                totalBookCount
         );
     }
 
@@ -154,6 +160,21 @@ public class HomeServiceImpl implements HomeService {
                         row.bookId(),
                         row.title(),
                         row.coverUrl()
+                ))
+                .toList();
+    }
+
+    private List<HomeResponseDto.BookRecommendation> buildRecommendations(Long memberId) {
+        List<Book> books = bookRepository.findRecommendedBooks(memberId, HOME_RECOMMENDATION_LIMIT);
+
+        return books.stream()
+                .map(book -> new HomeResponseDto.BookRecommendation(
+                        book.getId(),
+                        book.getTitle(),
+                        book.getAuthor(),
+                        book.getCoverImageUrl(),
+                        List.of(book.getPublisher()),
+                        "리뷰 인기"
                 ))
                 .toList();
     }

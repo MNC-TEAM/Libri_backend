@@ -1,11 +1,15 @@
 package monochrome.libri.comment.service.impl;
 
+import monochrome.libri.block.service.BlockService;
 import monochrome.libri.comment.domain.NoteComment;
+import monochrome.libri.comment.domain.NoteCommentReport;
 import monochrome.libri.comment.dto.request.CommentCreateRequestDto;
+import monochrome.libri.comment.dto.request.CommentReportCreateRequestDto;
 import monochrome.libri.comment.dto.response.CommentResponseDto;
 import monochrome.libri.comment.dto.response.CommentSliceResponseDto;
 import monochrome.libri.comment.dto.response.MyCommentItemResponseDto;
 import monochrome.libri.comment.dto.response.MyCommentListResponseDto;
+import monochrome.libri.comment.repository.NoteCommentReportRepository;
 import monochrome.libri.comment.repository.NoteCommentRepository;
 import monochrome.libri.comment.service.NoteCommentService;
 import monochrome.libri.global.exception.ErrorCode;
@@ -26,17 +30,23 @@ import java.util.List;
 public class NoteCommentServiceImpl implements NoteCommentService {
 
     private final NoteCommentRepository commentRepository;
+    private final NoteCommentReportRepository commentReportRepository;
     private final NoteRepository noteRepository;
     private final MemberService memberService;
+    private final BlockService blockService;
 
     public NoteCommentServiceImpl(
             NoteCommentRepository commentRepository,
+            NoteCommentReportRepository commentReportRepository,
             NoteRepository noteRepository,
-            MemberService memberService
+            MemberService memberService,
+            BlockService blockService
     ) {
         this.commentRepository = commentRepository;
+        this.commentReportRepository = commentReportRepository;
         this.noteRepository = noteRepository;
         this.memberService = memberService;
+        this.blockService = blockService;
     }
 
     @Override
@@ -55,6 +65,9 @@ public class NoteCommentServiceImpl implements NoteCommentService {
         if (note.isSecret()) {
             throw new LibriException(ErrorCode.ACCESS_DENIED);
         }
+        if (blockService.hasBlockRelation(memberId, note.getMember().getId())) {
+            throw new LibriException(ErrorCode.ACCESS_DENIED);
+        }
 
         Member member = memberService.getMemberById(memberId)
                 .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));
@@ -69,11 +82,47 @@ public class NoteCommentServiceImpl implements NoteCommentService {
     }
 
     @Override
+    @Transactional
+    public void reportComment(long noteId, long commentId, long memberId, CommentReportCreateRequestDto request) {
+        if (memberId <= 0) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        if (request == null || request.reason() == null) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        NoteComment comment = commentRepository.findWithNoteAndMemberByIdAndNoteId(commentId, noteId)
+                .orElseThrow(() -> new LibriException(ErrorCode.COMMENT_NOT_FOUND));
+        if (blockService.hasBlockRelation(memberId, comment.getMember().getId())
+                || blockService.hasBlockRelation(memberId, comment.getNote().getMember().getId())) {
+            throw new LibriException(ErrorCode.ACCESS_DENIED);
+        }
+        Member reporter = memberService.getMemberById(memberId)
+                .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (commentReportRepository.existsByNoteCommentAndReporter(comment, reporter)) {
+            throw new LibriException(ErrorCode.COMMENT_REPORT_ALREADY_EXISTS);
+        }
+
+        NoteCommentReport report = NoteCommentReport.builder()
+                .noteComment(comment)
+                .reporter(reporter)
+                .reason(request.reason())
+                .detail(trimToNull(request.detail()))
+                .build();
+
+        commentReportRepository.save(report);
+    }
+
+    @Override
     public CommentSliceResponseDto getComments(long noteId, long memberId, Pageable pageable) {
         Note note = noteRepository.findWithMemberById(noteId)
                 .orElseThrow(() -> new LibriException(ErrorCode.NOTE_NOT_FOUND));
 
         boolean isOwner = memberId > 0 && note.getMember().getId() == memberId;
+        if (!isOwner && blockService.hasBlockRelation(memberId, note.getMember().getId())) {
+            throw new LibriException(ErrorCode.ACCESS_DENIED);
+        }
         if (note.isSecret() && !isOwner) {
             throw new LibriException(ErrorCode.ACCESS_DENIED);
         }
@@ -146,5 +195,13 @@ public class NoteCommentServiceImpl implements NoteCommentService {
                 slice.getNumber(),
                 slice.getSize()
         );
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

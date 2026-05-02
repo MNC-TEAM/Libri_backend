@@ -4,9 +4,13 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import monochrome.libri.book.domain.Book;
 import monochrome.libri.book.domain.QBook;
+import monochrome.libri.review.domain.QReview;
+import monochrome.libri.review.domain.ReviewStatus;
+import monochrome.libri.shelf.domain.QShelf;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -69,5 +73,29 @@ public class BookRepositoryCustomImpl implements BookRepositoryCustom{
         }
 
         return new SliceImpl<>(results, pageable, hasNext);
+    }
+
+    @Override
+    public List<Book> findRecommendedBooks(Long memberId, int limit) {
+        QBook b = QBook.book;
+        QReview r = QReview.review;
+        QShelf s = QShelf.shelf;
+
+        BooleanExpression exclusion = memberId == null || memberId <= 0
+                ? null
+                : b.id.notIn(
+                        JPAExpressions.select(s.book.id)
+                                .from(s)
+                                .where(s.member.id.eq(memberId))
+                );
+
+        return queryFactory
+                .selectFrom(b)
+                .leftJoin(r).on(r.book.eq(b).and(r.status.eq(ReviewStatus.ACTIVE)))
+                .where(exclusion)
+                .groupBy(b.id)
+                .orderBy(r.id.count().desc(), b.createdDate.desc(), b.id.desc())
+                .limit(limit)
+                .fetch();
     }
 }
