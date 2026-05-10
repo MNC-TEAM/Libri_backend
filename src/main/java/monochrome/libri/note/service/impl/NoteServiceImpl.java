@@ -230,6 +230,7 @@ public class NoteServiceImpl implements NoteService {
 
         return new NoteDetailResponseDto(
                 note.getId(),
+                note.getShelf().getId(),
                 note.getContent(),
                 note.getCreatedDate(),
                 note.getProgressType(),

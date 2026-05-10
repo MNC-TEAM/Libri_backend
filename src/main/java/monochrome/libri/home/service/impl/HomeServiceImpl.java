@@ -2,6 +2,7 @@ package monochrome.libri.home.service.impl;
 
 import monochrome.libri.book.domain.Book;
 import monochrome.libri.book.repository.BookRepository;
+import monochrome.libri.book.service.AladinBookCatalogService;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.global.exception.ErrorCode;
@@ -33,6 +34,7 @@ public class HomeServiceImpl implements HomeService {
     private final FollowRepository followRepository;
     private final ShelfRepository shelfRepository;
     private final BookRepository bookRepository;
+    private final AladinBookCatalogService aladinBookCatalogService;
     private final Clock clock;
 
     public HomeServiceImpl(
@@ -40,12 +42,14 @@ public class HomeServiceImpl implements HomeService {
             FollowRepository followRepository,
             ShelfRepository shelfRepository,
             BookRepository bookRepository,
+            AladinBookCatalogService aladinBookCatalogService,
             Clock clock
     ) {
         this.memberService = memberService;
         this.followRepository = followRepository;
         this.shelfRepository = shelfRepository;
         this.bookRepository = bookRepository;
+        this.aladinBookCatalogService = aladinBookCatalogService;
         this.clock = clock;
     }
 
@@ -165,18 +169,38 @@ public class HomeServiceImpl implements HomeService {
     }
 
     private List<HomeResponseDto.BookRecommendation> buildRecommendations(Long memberId) {
-        List<Book> books = bookRepository.findRecommendedBooks(memberId, HOME_RECOMMENDATION_LIMIT);
-
-        return books.stream()
-                .map(book -> new HomeResponseDto.BookRecommendation(
-                        book.getId(),
-                        book.getTitle(),
-                        book.getAuthor(),
-                        book.getCoverImageUrl(),
-                        List.of(book.getPublisher()),
-                        "리뷰 인기"
-                ))
+        List<HomeResponseDto.BookRecommendation> recommendations = bookRepository.findRecommendedBooks(memberId, HOME_RECOMMENDATION_LIMIT).stream()
+                .map(book -> toRecommendation(book, "리뷰 인기"))
                 .toList();
+
+        if (recommendations.size() >= HOME_RECOMMENDATION_LIMIT || !aladinBookCatalogService.isConfigured()) {
+            return recommendations;
+        }
+
+        int remaining = HOME_RECOMMENDATION_LIMIT - recommendations.size();
+        List<Long> existingBookIds = recommendations.stream()
+                .map(HomeResponseDto.BookRecommendation::bookId)
+                .toList();
+
+        List<HomeResponseDto.BookRecommendation> bestsellerRecommendations = aladinBookCatalogService.fetchAndUpsertBestsellers(HOME_RECOMMENDATION_LIMIT + recommendations.size()).stream()
+                .filter(book -> !existingBookIds.contains(book.getId()))
+                .limit(remaining)
+                .map(book -> toRecommendation(book, "알라딘 베스트셀러"))
+                .toList();
+
+        return java.util.stream.Stream.concat(recommendations.stream(), bestsellerRecommendations.stream())
+                .toList();
+    }
+
+    private HomeResponseDto.BookRecommendation toRecommendation(Book book, String badgeText) {
+        return new HomeResponseDto.BookRecommendation(
+                book.getId(),
+                book.getTitle(),
+                book.getAuthor(),
+                book.getCoverImageUrl(),
+                book.getPublisher() == null ? List.of() : List.of(book.getPublisher()),
+                badgeText
+        );
     }
 
     private int safeInt(Integer value) {

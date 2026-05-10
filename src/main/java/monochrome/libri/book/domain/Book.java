@@ -97,4 +97,47 @@ public class Book extends AuditableEntity {
             this.salePageUrl = salePageUrl;
         }
     }
+
+    public void updateFromExternalSource(
+            String title,
+            String author,
+            String publisher,
+            String isbn,
+            Integer totalPage,
+            String coverImageUrl,
+            String introduction,
+            LocalDate releaseDate,
+            String salePageUrl
+    ) {
+        if (registeredByMember != null) {
+            return;
+        }
+        if (title != null && !title.isBlank()) {
+            this.title = title;
+        }
+        if (author != null && !author.isBlank()) {
+            this.author = author;
+        }
+        if (publisher != null && !publisher.isBlank()) {
+            this.publisher = publisher;
+        }
+        if (isbn != null && !isbn.isBlank()) {
+            this.isbn = isbn;
+        }
+        if (totalPage != null && totalPage > 0) {
+            this.totalPage = totalPage;
+        }
+        if (coverImageUrl != null && !coverImageUrl.isBlank()) {
+            this.coverImageUrl = coverImageUrl;
+        }
+        if (introduction != null && !introduction.isBlank()) {
+            this.introduction = introduction;
+        }
+        if (releaseDate != null) {
+            this.releaseDate = releaseDate;
+        }
+        if (salePageUrl != null && !salePageUrl.isBlank()) {
+            this.salePageUrl = salePageUrl;
+        }
+    }
 }

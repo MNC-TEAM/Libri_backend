@@ -7,6 +7,7 @@ import monochrome.libri.book.dto.request.BookDirectUpdateRequestDto;
 import monochrome.libri.book.dto.response.BookDetailResponseDto;
 import monochrome.libri.book.dto.response.BookResponseDto;
 import monochrome.libri.book.repository.BookRepository;
+import monochrome.libri.book.service.AladinBookCatalogService;
 import monochrome.libri.book.service.BookService;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
@@ -43,19 +44,22 @@ public class BookServiceImpl implements BookService {
     private final ReviewService reviewService;
     private final ShelfRepository shelfRepository;
     private final MemberService memberService;
+    private final AladinBookCatalogService aladinBookCatalogService;
 
     public BookServiceImpl(
             BookRepository bookRepository,
             ReviewRepository reviewRepository,
             ReviewService reviewService,
             ShelfRepository shelfRepository,
-            MemberService memberService
+            MemberService memberService,
+            AladinBookCatalogService aladinBookCatalogService
     ) {
         this.bookRepository = bookRepository;
         this.reviewRepository = reviewRepository;
         this.reviewService = reviewService;
         this.shelfRepository = shelfRepository;
         this.memberService = memberService;
+        this.aladinBookCatalogService = aladinBookCatalogService;
     }
 
     // ISBN-10: 9자리 숫자 + (숫자 or X)
@@ -86,7 +90,7 @@ public class BookServiceImpl implements BookService {
             if (!isValidIsbn(isbnKeyword)) {
                 return emptySlice(pageable);
             }
-            Optional<Book> found = bookRepository.findByIsbn(isbnKeyword);
+            Optional<Book> found = searchByIsbn(isbnKeyword);
 
             return found.<Slice<BookResponseDto>>map(book -> new SliceImpl<>(
                     List.of(BookResponseDto.from(book)),
@@ -95,15 +99,24 @@ public class BookServiceImpl implements BookService {
             )).orElseGet(() -> emptySlice(pageable));
         }
 
+        if (aladinBookCatalogService.isConfigured()) {
+            Slice<BookResponseDto> externalResult = searchByAladin(textKeyword, pageable);
+            if (!externalResult.getContent().isEmpty()) {
+                return externalResult;
+            }
+        }
+
         // 그 외 검색(책 제목, 저자, 출판사 등)
         return bookRepository.searchByKeyword(textKeyword, pageable)
                 .map(BookResponseDto::from);
     }
 
     @Override
+    @Transactional
     public BookDetailResponseDto getBookDetail(long bookId, Long memberId) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new LibriException(ErrorCode.BOOK_NOT_FOUND));
+        aladinBookCatalogService.enrichBookDetailIfNeeded(book);
 
         BookDetailResponseDto.ShelfInfo shelfInfo = null;
         if (memberId != null && memberId > 0) {
@@ -137,6 +150,7 @@ public class BookServiceImpl implements BookService {
                 book.getTotalPage(),
                 book.getCoverImageUrl(),
                 book.getIntroduction(),
+                book.getSalePageUrl(),
                 shelfInfo,
                 reviewService.getReviewStats(bookId),
                 reviews
@@ -230,6 +244,34 @@ public class BookServiceImpl implements BookService {
      */
     private Slice<BookResponseDto> emptySlice(Pageable pageable) {
         return new SliceImpl<>(List.of(), pageable, false);
+    }
+
+    private Optional<Book> searchByIsbn(String isbnKeyword) {
+        Optional<Book> localBook = bookRepository.findByIsbn(isbnKeyword);
+        if (localBook.isPresent() || !aladinBookCatalogService.isConfigured()) {
+            return localBook;
+        }
+
+        return aladinBookCatalogService.fetchAndUpsertByIsbn(isbnKeyword);
+    }
+
+    private Slice<BookResponseDto> searchByAladin(String keyword, Pageable pageable) {
+        int requestedSize = pageable.getPageSize() + 1;
+        int fetchSize = Math.max(1, requestedSize);
+        int start = (pageable.getPageNumber() * pageable.getPageSize()) + 1;
+
+        List<Book> books = aladinBookCatalogService.fetchAndUpsertByKeyword(keyword, start, fetchSize);
+        if (books.isEmpty()) {
+            return emptySlice(pageable);
+        }
+
+        boolean hasNext = books.size() > pageable.getPageSize();
+        List<Book> pageItems = hasNext ? books.subList(0, pageable.getPageSize()) : books;
+        List<BookResponseDto> content = pageItems.stream()
+                .map(BookResponseDto::from)
+                .toList();
+
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 
     /**

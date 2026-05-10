@@ -3,6 +3,7 @@ package monochrome.libri.home.service;
 import monochrome.libri.TestFixtures;
 import monochrome.libri.book.domain.Book;
 import monochrome.libri.book.repository.BookRepository;
+import monochrome.libri.book.service.AladinBookCatalogService;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.home.dto.response.HomeResponseDto;
@@ -36,11 +37,13 @@ class HomeServiceImplTest {
         FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
         BookRepository bookRepository = mock(BookRepository.class);
+        AladinBookCatalogService aladinBookCatalogService = mock(AladinBookCatalogService.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
         when(bookRepository.findRecommendedBooks(null, 3)).thenReturn(List.of());
+        when(aladinBookCatalogService.isConfigured()).thenReturn(false);
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, aladinBookCatalogService, clock);
 
         HomeResponseDto response = service.getHome(null);
 
@@ -57,6 +60,7 @@ class HomeServiceImplTest {
         FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
         BookRepository bookRepository = mock(BookRepository.class);
+        AladinBookCatalogService aladinBookCatalogService = mock(AladinBookCatalogService.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
         Member member = TestFixtures.member(1L);
@@ -85,8 +89,9 @@ class HomeServiceImplTest {
                 .thenReturn(List.of());
         when(bookRepository.findRecommendedBooks(1L, 3))
                 .thenReturn(List.of(TestFixtures.book(30L, 320)));
+        when(aladinBookCatalogService.isConfigured()).thenReturn(true);
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, aladinBookCatalogService, clock);
         HomeResponseDto response = service.getHome(1L);
 
         assertThat(response.me().followerCount()).isEqualTo(4);
@@ -108,6 +113,7 @@ class HomeServiceImplTest {
         FollowRepository followRepository = mock(FollowRepository.class);
         ShelfRepository shelfRepository = mock(ShelfRepository.class);
         BookRepository bookRepository = mock(BookRepository.class);
+        AladinBookCatalogService aladinBookCatalogService = mock(AladinBookCatalogService.class);
         Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
 
         Member member = TestFixtures.member(1L);
@@ -135,12 +141,49 @@ class HomeServiceImplTest {
         when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.FINISHED), eq(3)))
                 .thenReturn(List.of());
         when(bookRepository.findRecommendedBooks(1L, 3)).thenReturn(List.of());
+        when(aladinBookCatalogService.isConfigured()).thenReturn(false);
 
-        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, clock);
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, aladinBookCatalogService, clock);
         HomeResponseDto response = service.getHome(1L);
 
         assertThat(response.readingBooks()).hasSize(1);
         assertThat(response.readingBooks().get(0).progressPercent()).isEqualTo(25);
         assertThat(response.me().unreadNotiCount()).isEqualTo(1);
+    }
+
+    @Test
+    void getHome_fillsRecommendationsWithBestsellersWhenLocalIsShort() {
+        MemberService memberService = mock(MemberService.class);
+        FollowRepository followRepository = mock(FollowRepository.class);
+        ShelfRepository shelfRepository = mock(ShelfRepository.class);
+        BookRepository bookRepository = mock(BookRepository.class);
+        AladinBookCatalogService aladinBookCatalogService = mock(AladinBookCatalogService.class);
+        Clock clock = Clock.fixed(Instant.parse("2024-01-10T00:00:00Z"), ZoneOffset.UTC);
+
+        Member member = TestFixtures.member(1L);
+        Book localBook = TestFixtures.book(30L, 320);
+        Book bestseller1 = TestFixtures.book(31L, 280);
+        Book bestseller2 = TestFixtures.book(32L, 290);
+
+        when(memberService.getMemberById(1L)).thenReturn(Optional.of(member));
+        when(followRepository.countByFollowingAndFollowStatus(member, FollowStatus.FOLLOW)).thenReturn(0L);
+        when(followRepository.countByFollowerAndFollowStatus(member, FollowStatus.FOLLOW)).thenReturn(0L);
+        when(shelfRepository.findCountSummaryByMemberId(1L)).thenReturn(new ShelfCountSummary(0, 0, 0));
+        when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.READING), eq(3))).thenReturn(List.of());
+        when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.WANT_TO_READ), eq(3))).thenReturn(List.of());
+        when(shelfRepository.findShelfBooksByStatus(eq(1L), eq(ShelfStatus.FINISHED), eq(3))).thenReturn(List.of());
+        when(bookRepository.findRecommendedBooks(1L, 3)).thenReturn(List.of(localBook));
+        when(aladinBookCatalogService.isConfigured()).thenReturn(true);
+        when(aladinBookCatalogService.fetchAndUpsertBestsellers(4)).thenReturn(List.of(localBook, bestseller1, bestseller2));
+
+        HomeServiceImpl service = new HomeServiceImpl(memberService, followRepository, shelfRepository, bookRepository, aladinBookCatalogService, clock);
+        HomeResponseDto response = service.getHome(1L);
+
+        assertThat(response.recommendations()).hasSize(3);
+        assertThat(response.recommendations().get(0).badgeText()).isEqualTo("리뷰 인기");
+        assertThat(response.recommendations().get(1).badgeText()).isEqualTo("알라딘 베스트셀러");
+        assertThat(response.recommendations().get(2).badgeText()).isEqualTo("알라딘 베스트셀러");
+        assertThat(response.recommendations().get(1).bookId()).isEqualTo(31L);
+        assertThat(response.recommendations().get(2).bookId()).isEqualTo(32L);
     }
 }

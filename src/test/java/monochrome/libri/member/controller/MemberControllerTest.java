@@ -3,9 +3,14 @@ package monochrome.libri.member.controller;
 import monochrome.libri.TestFixtures;
 import monochrome.libri.block.dto.response.BlockedMemberListResponseDto;
 import monochrome.libri.block.service.BlockService;
+import monochrome.libri.follow.dto.MemberSummaryDto;
+import monochrome.libri.follow.dto.response.FollowMemberSliceResponseDto;
+import monochrome.libri.follow.service.FollowService;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.UserPrincipal;
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.domain.MemberReportReason;
+import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.request.NicknameUpdateRequestDto;
 import monochrome.libri.member.dto.request.PrivacyUpdateRequestDto;
@@ -33,6 +38,9 @@ class MemberControllerTest {
 
     @Mock
     private MemberService memberService;
+
+    @Mock
+    private FollowService followService;
 
     @Mock
     private BlockService blockService;
@@ -84,6 +92,56 @@ class MemberControllerTest {
         verify(memberService).getMemberProfile(1L, 2L);
         assertThat(response.getBody().data().following()).isTrue();
         assertThat(response.getBody().data().privateAccount()).isTrue();
+    }
+
+    @Test
+    void getFollowers_returnsSlice() {
+        when(followService.findFollowers(eq(2L), any())).thenReturn(
+                new FollowMemberSliceResponseDto(List.of(new MemberSummaryDto(3L, "user3", "nick3", "/profile/3")), false, 0, 20)
+        );
+
+        var response = controller.getFollowers(2L, 0, 20);
+
+        assertThat(response.getBody().data().content()).hasSize(1);
+        verify(followService).findFollowers(eq(2L), any());
+    }
+
+    @Test
+    void followMember_requiresAuth() {
+        assertThatThrownBy(() -> controller.followMember(2L, null))
+                .isInstanceOf(LibriException.class);
+        verifyNoInteractions(followService);
+    }
+
+    @Test
+    void followMember_callsService() {
+        UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
+
+        var response = controller.followMember(2L, principal);
+
+        verify(followService).follow(1L, 2L);
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
+    }
+
+    @Test
+    void unfollowMember_callsService() {
+        UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
+
+        var response = controller.unfollowMember(2L, principal);
+
+        verify(followService).unfollow(1L, 2L);
+        assertThat(response.getBody().success()).isTrue();
+    }
+
+    @Test
+    void reportMember_callsService() {
+        UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
+        MemberReportCreateRequestDto request = new MemberReportCreateRequestDto(MemberReportReason.ABUSE, "spam");
+
+        var response = controller.reportMember(2L, principal, request);
+
+        verify(memberService).reportMember(1L, 2L, request);
+        assertThat(response.getStatusCode().value()).isEqualTo(201);
     }
 
     @Test
