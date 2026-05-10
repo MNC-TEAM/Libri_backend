@@ -5,13 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.follow.domain.Follow;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.dto.MemberSummaryDto;
+import monochrome.libri.follow.dto.response.FollowMemberSliceResponseDto;
 import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,14 +96,26 @@ public class FollowServiceImpl implements FollowService{
     }
 
     @Override
-    public Slice<MemberSummaryDto> findFollowers(Long memberId, Pageable pageable) {
+    public FollowMemberSliceResponseDto findFollowers(Long memberId, Pageable pageable) {
         Member member = getMemberOrThrow(memberId);
-        return followRepository.findFollowers(member, pageable);
+        var slice = followRepository.findFollowers(member, pageable);
+        return new FollowMemberSliceResponseDto(
+                slice.getContent(),
+                slice.hasNext(),
+                slice.getNumber(),
+                slice.getSize()
+        );
     }
 
     @Override
-    public Slice<MemberSummaryDto> findFollowings(Long memberId, Pageable pageable) {
+    public FollowMemberSliceResponseDto findFollowings(Long memberId, Pageable pageable) {
         Member member = getMemberOrThrow(memberId);
-        return followRepository.findFollowings(member, pageable);
+        var slice = followRepository.findFollowings(member, pageable);
+        return new FollowMemberSliceResponseDto(
+                slice.getContent(),
+                slice.hasNext(),
+                slice.getNumber(),
+                slice.getSize()
+        );
     }
 }

@@ -16,6 +16,7 @@ public record BookDetailResponseDto(
         int totalPage,
         String coverUrl,
         String introduction,
+        String salePageUrl,
         ShelfInfo shelf,
         ReviewStatsResponseDto reviewStats,
         List<ReviewSummaryResponseDto> reviews

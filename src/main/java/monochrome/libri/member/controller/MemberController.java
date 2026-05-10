@@ -7,6 +7,9 @@ import monochrome.libri.global.security.UserPrincipal;
 import monochrome.libri.global.swagger.ApiErrorCodes;
 import monochrome.libri.block.dto.response.BlockedMemberListResponseDto;
 import monochrome.libri.block.service.BlockService;
+import monochrome.libri.follow.dto.response.FollowMemberSliceResponseDto;
+import monochrome.libri.follow.service.FollowService;
+import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.request.NicknameUpdateRequestDto;
 import monochrome.libri.member.dto.request.PrivacyUpdateRequestDto;
@@ -19,6 +22,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -29,10 +33,12 @@ import jakarta.validation.Valid;
 @SecurityRequirement(name = "BearerAuth")
 public class MemberController {
     private final MemberService memberService;
+    private final FollowService followService;
     private final BlockService blockService;
 
-    public MemberController(MemberService memberService, BlockService blockService) {
+    public MemberController(MemberService memberService, FollowService followService, BlockService blockService) {
         this.memberService = memberService;
+        this.followService = followService;
         this.blockService = blockService;
     }
 
@@ -112,6 +118,118 @@ public class MemberController {
     ) {
         Long actorMemberId = userPrincipal == null ? null : userPrincipal.getMemberId();
         return ResponseEntity.ok(ApiResponse.ok(memberService.getMemberProfile(actorMemberId, memberId)));
+    }
+
+    @GetMapping("/{memberId}/followers")
+    @Operation(
+            summary = "회원 팔로워 목록 조회",
+            description = "특정 회원의 팔로워 목록을 조회합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<FollowMemberSliceResponseDto>> getFollowers(
+            @PathVariable long memberId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 0 || size <= 0) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.ok(followService.findFollowers(memberId, pageable)));
+    }
+
+    @GetMapping("/{memberId}/followings")
+    @Operation(
+            summary = "회원 팔로잉 목록 조회",
+            description = "특정 회원이 팔로우한 회원 목록을 조회합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<FollowMemberSliceResponseDto>> getFollowings(
+            @PathVariable long memberId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        if (page < 0 || size <= 0) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(ApiResponse.ok(followService.findFollowings(memberId, pageable)));
+    }
+
+    @PostMapping("/{memberId}/follow")
+    @Operation(
+            summary = "회원 팔로우",
+            description = "특정 회원을 팔로우합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.SELF_FOLLOW_NOT_ALLOWED,
+            ErrorCode.EXIST_FOLLOW_RELATION,
+            ErrorCode.ACCESS_DENIED
+    })
+    public ResponseEntity<ApiResponse<Void>> followMember(
+            @PathVariable long memberId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        followService.follow(userPrincipal.getMemberId(), memberId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok());
+    }
+
+    @DeleteMapping("/{memberId}/follow")
+    @Operation(
+            summary = "회원 언팔로우",
+            description = "특정 회원을 언팔로우합니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.SELF_FOLLOW_NOT_ALLOWED,
+            ErrorCode.FOLLOW_NOT_FOUND,
+            ErrorCode.ALREADY_UNFOLLOWED
+    })
+    public ResponseEntity<ApiResponse<Void>> unfollowMember(
+            @PathVariable long memberId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        followService.unfollow(userPrincipal.getMemberId(), memberId);
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    @PostMapping("/{memberId}/reports")
+    @Operation(
+            summary = "회원 신고",
+            description = "특정 회원을 신고합니다. 같은 회원은 한 번만 신고할 수 있습니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.AUTHENTICATION_FAILED,
+            ErrorCode.MEMBER_NOT_FOUND,
+            ErrorCode.MEMBER_REPORT_ALREADY_EXISTS,
+            ErrorCode.SELF_REPORT_NOT_ALLOWED,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<Void>> reportMember(
+            @PathVariable long memberId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @Valid @RequestBody MemberReportCreateRequestDto request
+    ) {
+        if (userPrincipal == null) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        memberService.reportMember(userPrincipal.getMemberId(), memberId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok());
     }
 
     @PostMapping("/{memberId}/block")

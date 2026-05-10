@@ -7,10 +7,13 @@ import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.domain.MemberReport;
+import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.response.MemberPrivacyResponseDto;
 import monochrome.libri.member.dto.response.MemberProfileResponseDto;
 import monochrome.libri.member.dto.response.MemberResponseDto;
+import monochrome.libri.member.repository.MemberReportRepository;
 import monochrome.libri.member.repository.MemberRepository;
 import monochrome.libri.member.service.MemberService;
 import org.springframework.stereotype.Service;
@@ -23,17 +26,20 @@ import java.util.Optional;
 public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final FollowRepository followRepository;
+    private final MemberReportRepository memberReportRepository;
     private final BlockService blockService;
     private final PasswordHashService passwordHashService;
 
     public MemberServiceImpl(
             MemberRepository memberRepository,
             FollowRepository followRepository,
+            MemberReportRepository memberReportRepository,
             BlockService blockService,
             PasswordHashService passwordHashService
     ) {
         this.memberRepository = memberRepository;
         this.followRepository = followRepository;
+        this.memberReportRepository = memberReportRepository;
         this.blockService = blockService;
         this.passwordHashService = passwordHashService;
     }
@@ -110,6 +116,36 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
+    public void reportMember(long reporterMemberId, long reportedMemberId, MemberReportCreateRequestDto request) {
+        if (reporterMemberId <= 0) {
+            throw new LibriException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        if (request == null || request.reason() == null) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (reporterMemberId == reportedMemberId) {
+            throw new LibriException(ErrorCode.SELF_REPORT_NOT_ALLOWED);
+        }
+
+        Member reporter = getRequiredMember(reporterMemberId);
+        Member reportedMember = getRequiredMember(reportedMemberId);
+
+        if (memberReportRepository.existsByReportedMemberAndReporter(reportedMember, reporter)) {
+            throw new LibriException(ErrorCode.MEMBER_REPORT_ALREADY_EXISTS);
+        }
+
+        MemberReport report = MemberReport.builder()
+                .reportedMember(reportedMember)
+                .reporter(reporter)
+                .reason(request.reason())
+                .detail(trimToNull(request.detail()))
+                .build();
+
+        memberReportRepository.save(report);
+    }
+
+    @Override
     public void withdraw(Long memberId) {
         Member member = getRequiredMember(memberId);
 
@@ -119,5 +155,13 @@ public class MemberServiceImpl implements MemberService {
     private Member getRequiredMember(long memberId) {
         return getMemberById(memberId)
                 .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

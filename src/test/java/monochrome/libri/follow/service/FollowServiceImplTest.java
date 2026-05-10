@@ -128,8 +128,9 @@ class FollowServiceImplTest {
 
         var result = service.findFollowers(1L, pageable);
 
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).memberId()).isEqualTo(2L);
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).memberId()).isEqualTo(2L);
+        assertThat(result.hasNext()).isFalse();
         verify(followRepository).findFollowers(member, pageable);
     }
 
@@ -146,8 +147,9 @@ class FollowServiceImplTest {
 
         var result = service.findFollowings(1L, pageable);
 
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).memberId()).isEqualTo(3L);
+        assertThat(result.content()).hasSize(1);
+        assertThat(result.content().get(0).memberId()).isEqualTo(3L);
+        assertThat(result.page()).isEqualTo(0);
         verify(followRepository).findFollowings(member, pageable);
     }
 }

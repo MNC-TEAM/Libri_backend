@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 public record NoteDetailResponseDto(
         Long noteId,
+        Long shelfId,
         String content,
         LocalDateTime createdDate,
         monochrome.libri.note.domain.NoteProgressType progressType,
