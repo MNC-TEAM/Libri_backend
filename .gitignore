@@ -8,6 +8,7 @@ build/
 ### env files ###
 .env
 .env.local-dev
+dev.env
 
 ### Firebase 서비스 계정 (로컬 전용) ###
 src/main/resources/libri-firebase.json
