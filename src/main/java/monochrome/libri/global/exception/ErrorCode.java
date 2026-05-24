@@ -29,6 +29,7 @@ public enum ErrorCode {
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "N002", "댓글을 찾을 수 없습니다."),
     COMMENT_REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "N003", "이미 신고한 댓글입니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N003", "알림을 찾을 수 없습니다."),
+    MEMBER_REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "N004", "이미 신고한 회원입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "공지사항을 찾을 수 없습니다."),
     INQUIRY_NOT_FOUND(HttpStatus.NOT_FOUND, "Q001", "문의 내역을 찾을 수 없습니다."),
@@ -42,7 +43,10 @@ public enum ErrorCode {
     // 차단
     BLOCK_ALREADY_EXISTS(HttpStatus.CONFLICT, "K001", "이미 차단한 회원입니다."),
     SELF_BLOCK_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "K002", "자기 자신은 차단할 수 없습니다."),
-    BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "K003", "차단 관계를 찾을 수 없습니다.")
+    BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "K003", "차단 관계를 찾을 수 없습니다."),
+
+    // 신고
+    SELF_REPORT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "P001", "자기 자신은 신고할 수 없습니다.")
     ;
 
     private final HttpStatus httpStatus;

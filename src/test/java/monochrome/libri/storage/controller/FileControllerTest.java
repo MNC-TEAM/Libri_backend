@@ -41,10 +41,10 @@ class FileControllerTest {
     @Test
     void createPresignedUploadUrl_returnsPresignedInfo() {
         UserPrincipal principal = new UserPrincipal(1L, null, List.of(), true);
-        PresignedUploadRequestDto request = new PresignedUploadRequestDto("profiles", "me.png", "image/png");
+        PresignedUploadRequestDto request = new PresignedUploadRequestDto("books", "cover.png", "image/png");
         PresignedUploadResponseDto responseDto = new PresignedUploadResponseDto(
                 "https://upload-url",
-                "profiles/1/key.png",
+                "books/1/key.png",
                 "https://file-url",
                 300
         );
@@ -54,7 +54,7 @@ class FileControllerTest {
 
         verify(presignedUploadService).createPresignedUploadUrl(1L, request);
         assertThat(response.getBody().data().uploadUrl()).isEqualTo("https://upload-url");
-        assertThat(response.getBody().data().key()).isEqualTo("profiles/1/key.png");
+        assertThat(response.getBody().data().key()).isEqualTo("books/1/key.png");
     }
 
     @Test

@@ -6,6 +6,7 @@ import monochrome.libri.storage.config.S3Properties;
 import monochrome.libri.storage.dto.request.PresignedUploadRequestDto;
 import monochrome.libri.storage.dto.response.PresignedDownloadResponseDto;
 import monochrome.libri.storage.dto.response.PresignedUploadResponseDto;
+import monochrome.libri.storage.domain.UploadDirectory;
 import monochrome.libri.storage.service.PresignedUploadService;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -21,14 +22,12 @@ import java.net.URLEncoder;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class PresignedUploadServiceImpl implements PresignedUploadService {
 
-    private static final Set<String> SUPPORTED_DIRECTORIES = Set.of("profiles");
-    private static final Set<String> SUPPORTED_CONTENT_TYPES = Set.of(
+    private static final java.util.Set<String> SUPPORTED_CONTENT_TYPES = java.util.Set.of(
             "image/jpeg",
             "image/png",
             "image/webp"
@@ -58,7 +57,7 @@ public class PresignedUploadServiceImpl implements PresignedUploadService {
         String fileName = request.fileName().trim();
         String contentType = request.contentType().trim();
 
-        if (!SUPPORTED_DIRECTORIES.contains(directory) || !SUPPORTED_CONTENT_TYPES.contains(contentType)) {
+        if (!UploadDirectory.supports(directory) || !SUPPORTED_CONTENT_TYPES.contains(contentType)) {
             throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
         }
 

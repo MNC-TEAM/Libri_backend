@@ -34,6 +34,11 @@ jwt:
   issuer: ${JWT_ISSUER}
 
 app:
+  aladin:
+    base-url: ${ALADIN_BASE_URL:http://www.aladin.co.kr}
+    ttb-key: ${ALADIN_TTB_KEY:}
+    version: ${ALADIN_API_VERSION:20131101}
+    max-results: ${ALADIN_MAX_RESULTS:50}
   s3:
     region: ${AWS_REGION:ap-northeast-2}
     bucket: ${AWS_S3_BUCKET:}

@@ -1,6 +1,7 @@
 package monochrome.libri.member.service;
 
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.member.dto.response.MemberPrivacyResponseDto;
 import monochrome.libri.member.dto.response.MemberProfileResponseDto;
@@ -22,6 +23,8 @@ public interface MemberService {
     MemberPrivacyResponseDto getMyPrivacy(long memberId);
 
     MemberProfileResponseDto getMemberProfile(Long actorMemberId, long targetMemberId);
+
+    void reportMember(long reporterMemberId, long reportedMemberId, MemberReportCreateRequestDto request);
 
     /**
      * ID로 회원 조회

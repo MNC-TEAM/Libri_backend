@@ -10,6 +10,7 @@ import monochrome.libri.note.domain.Note;
 import monochrome.libri.note.domain.NoteProgressType;
 import monochrome.libri.note.dto.request.NoteCreateRequestDto;
 import monochrome.libri.note.dto.request.NoteUpdateRequestDto;
+import monochrome.libri.note.dto.response.NoteDetailResponseDto;
 import monochrome.libri.note.repository.NoteBookmarkRepository;
 import monochrome.libri.note.repository.NoteLikeRepository;
 import monochrome.libri.note.repository.NoteRepository;
@@ -103,6 +104,23 @@ class NoteServiceImplTest {
 
         assertThatThrownBy(() -> service.getNoteDetail(10L, 999L))
                 .isInstanceOf(LibriException.class);
+    }
+
+    @Test
+    void getNoteDetail_includesShelfIdForOwner() {
+        Member owner = TestFixtures.member(1L);
+        Shelf shelf = TestFixtures.shelf(2L, owner, TestFixtures.book(3L, 100));
+        Note note = TestFixtures.note(10L, shelf, owner, false);
+
+        when(noteRepository.findWithBookById(10L)).thenReturn(Optional.of(note));
+        when(noteLikeRepository.existsByNoteIdAndMemberId(10L, 1L)).thenReturn(false);
+        when(noteBookmarkRepository.existsByNoteIdAndMemberId(10L, 1L)).thenReturn(false);
+        when(noteCommentRepository.countByNoteId(10L)).thenReturn(0L);
+
+        NoteDetailResponseDto response = service.getNoteDetail(10L, 1L);
+
+        assertThat(response.shelfId()).isEqualTo(2L);
+        assertThat(response.isOwner()).isTrue();
     }
 
     @Test

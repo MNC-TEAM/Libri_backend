@@ -1,15 +1,22 @@
 package monochrome.libri.member.service;
 
 import monochrome.libri.TestFixtures;
+import monochrome.libri.block.service.BlockService;
+import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
 import monochrome.libri.member.domain.Member;
+import monochrome.libri.member.domain.MemberReport;
+import monochrome.libri.member.domain.MemberReportReason;
 import monochrome.libri.member.domain.MemberStatus;
+import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
 import monochrome.libri.fcm.repository.FcmNotificationTokenRepository;
+import monochrome.libri.member.repository.MemberReportRepository;
 import monochrome.libri.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,6 +32,15 @@ class MemberServiceImplTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private FollowRepository followRepository;
+
+    @Mock
+    private MemberReportRepository memberReportRepository;
+
+    @Mock
+    private BlockService blockService;
 
     @Mock
     private PasswordHashService passwordHashService;
@@ -83,5 +99,34 @@ class MemberServiceImplTest {
 
         verify(fcmNotificationTokenRepository).deleteByMember_Id(1L);
         assertThat(member.getMemberStatus()).isEqualTo(MemberStatus.DELETE);
+    }
+
+    @Test
+    void reportMember_savesReport() {
+        Member reporter = TestFixtures.member(1L);
+        Member reported = TestFixtures.member(2L);
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(memberRepository.findById(2L)).thenReturn(Optional.of(reported));
+        when(memberReportRepository.existsByReportedMemberAndReporter(reported, reporter)).thenReturn(false);
+
+        service.reportMember(1L, 2L, new MemberReportCreateRequestDto(MemberReportReason.ABUSE, "  abusive profile  "));
+
+        ArgumentCaptor<MemberReport> captor = ArgumentCaptor.forClass(MemberReport.class);
+        verify(memberReportRepository).save(captor.capture());
+        assertThat(captor.getValue().getReason()).isEqualTo(MemberReportReason.ABUSE);
+        assertThat(captor.getValue().getDetail()).isEqualTo("abusive profile");
+    }
+
+    @Test
+    void reportMember_rejectsDuplicateReport() {
+        Member reporter = TestFixtures.member(1L);
+        Member reported = TestFixtures.member(2L);
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(reporter));
+        when(memberRepository.findById(2L)).thenReturn(Optional.of(reported));
+        when(memberReportRepository.existsByReportedMemberAndReporter(reported, reporter)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.reportMember(1L, 2L, new MemberReportCreateRequestDto(MemberReportReason.SPAM, null)))
+                .isInstanceOf(LibriException.class);
+        verify(memberReportRepository, never()).save(any());
     }
 }
