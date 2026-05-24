@@ -33,8 +33,8 @@ public class Notification extends AuditableEntity {
     @Column(name = "actor_profile_path")
     private String actorProfilePath;
 
-    /** 관련 노트 ID */
-    @Column(name = "note_id", nullable = false)
+    /** 관련 노트 ID (FOLLOW 타입인 경우 null) */
+    @Column(name = "note_id")
     private Long noteId;
 
     @Column(nullable = false, length = 500)

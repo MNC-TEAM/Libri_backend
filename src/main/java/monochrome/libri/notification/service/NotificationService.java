@@ -18,6 +18,17 @@ public interface NotificationService {
             NotificationType notificationType
     );
 
+    /**
+     * 알림 생성 — noteId 없는 경우 (FOLLOW 등)
+     */
+    void createNotification(
+            long recipientMemberId,
+            long actorMemberId,
+            String actorProfilePath,
+            String content,
+            NotificationType notificationType
+    );
+
     NotificationSliceResponseDto getNotifications(long memberId, Pageable pageable);
 
     void readNotification(long notificationId, long memberId);

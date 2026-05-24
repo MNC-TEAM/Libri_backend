@@ -18,6 +18,8 @@ import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
 import monochrome.libri.note.domain.Note;
 import monochrome.libri.note.repository.NoteRepository;
+import monochrome.libri.notification.domain.NotificationType;
+import monochrome.libri.notification.service.NotificationService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -34,19 +36,22 @@ public class NoteCommentServiceImpl implements NoteCommentService {
     private final NoteRepository noteRepository;
     private final MemberService memberService;
     private final BlockService blockService;
+    private final NotificationService notificationService;
 
     public NoteCommentServiceImpl(
             NoteCommentRepository commentRepository,
             NoteCommentReportRepository commentReportRepository,
             NoteRepository noteRepository,
             MemberService memberService,
-            BlockService blockService
+            BlockService blockService,
+            NotificationService notificationService
     ) {
         this.commentRepository = commentRepository;
         this.commentReportRepository = commentReportRepository;
         this.noteRepository = noteRepository;
         this.memberService = memberService;
         this.blockService = blockService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -79,6 +84,15 @@ public class NoteCommentServiceImpl implements NoteCommentService {
                 .build();
 
         commentRepository.save(comment);
+
+        notificationService.createNotification(
+                note.getMember().getId(),
+                memberId,
+                member.getProfilePath(),
+                noteId,
+                member.getNickname() + "님이 댓글을 남겼습니다.",
+                NotificationType.COMMENT
+        );
     }
 
     @Override

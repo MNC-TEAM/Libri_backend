@@ -43,6 +43,29 @@ public class NotificationServiceImpl implements NotificationService {
             String content,
             NotificationType notificationType
     ) {
+        createNotificationInternal(recipientMemberId, actorMemberId, actorProfilePath, noteId, content, notificationType);
+    }
+
+    @Override
+    @Transactional
+    public void createNotification(
+            long recipientMemberId,
+            long actorMemberId,
+            String actorProfilePath,
+            String content,
+            NotificationType notificationType
+    ) {
+        createNotificationInternal(recipientMemberId, actorMemberId, actorProfilePath, null, content, notificationType);
+    }
+
+    private void createNotificationInternal(
+            long recipientMemberId,
+            long actorMemberId,
+            String actorProfilePath,
+            Long noteId,
+            String content,
+            NotificationType notificationType
+    ) {
         if (recipientMemberId == actorMemberId) {
             return;
         }
@@ -56,16 +79,11 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
         Notification saved = notificationRepository.save(notification);
         try {
-            fcmPushSender.sendToMember(
-                    recipientMemberId,
-                    "Libri",
-                    content,
-                    Map.of(
-                            "notificationId", String.valueOf(saved.getId()),
-                            "noteId", String.valueOf(noteId),
-                            "type", notificationType.name()
-                    )
-            );
+            Map<String, String> data = new java.util.HashMap<>();
+            data.put("notificationId", String.valueOf(saved.getId()));
+            data.put("noteId", noteId != null ? String.valueOf(noteId) : "");
+            data.put("type", notificationType.name());
+            fcmPushSender.sendToMember(recipientMemberId, "Libri", content, data);
         } catch (Exception e) {
             log.warn("FCM 푸시 후처리 중 오류 (알림 저장은 완료됨) notificationId={}", saved.getId(), e);
         }

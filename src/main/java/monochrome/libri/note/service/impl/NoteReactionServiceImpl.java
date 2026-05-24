@@ -11,6 +11,8 @@ import monochrome.libri.note.repository.NoteBookmarkRepository;
 import monochrome.libri.note.repository.NoteLikeRepository;
 import monochrome.libri.note.repository.NoteRepository;
 import monochrome.libri.note.service.NoteReactionService;
+import monochrome.libri.notification.domain.NotificationType;
+import monochrome.libri.notification.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,17 +24,20 @@ public class NoteReactionServiceImpl implements NoteReactionService {
     private final NoteLikeRepository noteLikeRepository;
     private final NoteBookmarkRepository noteBookmarkRepository;
     private final MemberService memberService;
+    private final NotificationService notificationService;
 
     public NoteReactionServiceImpl(
             NoteRepository noteRepository,
             NoteLikeRepository noteLikeRepository,
             NoteBookmarkRepository noteBookmarkRepository,
-            MemberService memberService
+            MemberService memberService,
+            NotificationService notificationService
     ) {
         this.noteRepository = noteRepository;
         this.noteLikeRepository = noteLikeRepository;
         this.noteBookmarkRepository = noteBookmarkRepository;
         this.memberService = memberService;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -57,6 +62,15 @@ public class NoteReactionServiceImpl implements NoteReactionService {
 
         noteLikeRepository.save(like);
         note.increaseLikeCount();
+
+        notificationService.createNotification(
+                note.getMember().getId(),
+                memberId,
+                member.getProfilePath(),
+                noteId,
+                member.getNickname() + "님이 좋아요를 눌렀습니다.",
+                NotificationType.LIKED
+        );
     }
 
     @Override

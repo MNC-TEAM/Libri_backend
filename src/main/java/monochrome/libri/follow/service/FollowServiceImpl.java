@@ -11,6 +11,8 @@ import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
+import monochrome.libri.notification.domain.NotificationType;
+import monochrome.libri.notification.service.NotificationService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +25,13 @@ public class FollowServiceImpl implements FollowService{
     private final FollowRepository followRepository;
     private final MemberService memberService;
     private final BlockService blockService;
+    private final NotificationService notificationService;
 
-    public FollowServiceImpl(FollowRepository followRepository, MemberService memberService, BlockService blockService) {
+    public FollowServiceImpl(FollowRepository followRepository, MemberService memberService, BlockService blockService, NotificationService notificationService) {
         this.followRepository = followRepository;
         this.memberService = memberService;
         this.blockService = blockService;
+        this.notificationService = notificationService;
     }
 
     // ************* 내부 메서드 *************
@@ -73,6 +77,14 @@ public class FollowServiceImpl implements FollowService{
                 );
 
         log.info("follow.created followerId={} followingId={}", followerMemberId, followingMemberId);
+
+        notificationService.createNotification(
+                followingMemberId,
+                followerMemberId,
+                follower.getProfilePath(),
+                follower.getNickname() + "님이 팔로우했습니다.",
+                NotificationType.FOLLOW
+        );
     }
 
     @Override

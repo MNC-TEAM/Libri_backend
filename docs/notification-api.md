@@ -90,13 +90,13 @@ GET /api/v1/notifications
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | `id` | long | 알림 ID |
-| `noteId` | long | 알림이 발생한 노트 ID |
+| `noteId` | long \| null | 알림이 발생한 노트 ID (`FOLLOW` 타입인 경우 `null`) |
 | `content` | string | 알림 본문 |
 | `actorProfilePath` | string | 행위자 프로필 이미지 경로 |
 | `actorMemberId` | long | 알림을 발생시킨 회원 ID |
 | `read` | boolean | 읽음 여부 |
 | `createdAt` | datetime | 알림 생성 시각 |
-| `notificationType` | enum | `LIKED` (좋아요) / `COMMENT` (댓글) |
+| `notificationType` | enum | `LIKED` / `COMMENT` / `FOLLOW` |
 
 ### 오류 응답
 
@@ -305,22 +305,27 @@ DELETE /api/v1/fcm-tokens
 
 ## 알림 타입 (`NotificationType`)
 
-| 값 | 설명 |
-|---|---|
-| `LIKED` | 내 노트에 좋아요가 달린 경우 |
-| `COMMENT` | 내 노트에 댓글이 달린 경우 |
+| 값 | 트리거 조건 | 알림 본문 예시 | `noteId` |
+|---|---|---|---|
+| `LIKED` | 내 노트에 좋아요 | `{닉네임}님이 좋아요를 눌렀습니다.` | 해당 노트 ID |
+| `COMMENT` | 내 노트에 댓글 | `{닉네임}님이 댓글을 남겼습니다.` | 해당 노트 ID |
+| `FOLLOW` | 누군가 나를 팔로우 | `{닉네임}님이 팔로우했습니다.` | `null` |
 
 ---
 
 ## 알림 생성 흐름
 
-알림은 클라이언트가 직접 생성하지 않으며, 서버 내부 이벤트(좋아요·댓글)에 의해 자동 생성됩니다.
+알림은 클라이언트가 직접 생성하지 않으며, 서버 내부 이벤트에 의해 자동 생성됩니다.
 
 ```
-사용자 A가 노트에 좋아요/댓글 발생
+좋아요      → NoteReactionServiceImpl.like()
+댓글        → NoteCommentServiceImpl.createComment()
+팔로우      → FollowServiceImpl.follow()
         │
         ▼
 NotificationService.createNotification()
+        │
+        ├── 행위자 == 수신자인 경우 → 무시 (본인 행위)
         │
         ├── DB에 Notification 레코드 저장
         │
@@ -330,6 +335,13 @@ NotificationService.createNotification()
                     (실패해도 DB 저장 트랜잭션에 영향 없음)
 ```
 
-- 행위자(actorMemberId)와 수신자(recipientMemberId)가 동일하면 알림을 생성하지 않습니다.
+**FCM `data` 페이로드**
+
+| 키 | 값 | 비고 |
+|---|---|---|
+| `notificationId` | 저장된 알림 ID | |
+| `noteId` | 노트 ID 문자열 | `FOLLOW` 타입인 경우 빈 문자열(`""`) |
+| `type` | `LIKED` / `COMMENT` / `FOLLOW` | |
+
+- 행위자(`actorMemberId`)와 수신자(`recipientMemberId`)가 동일하면 알림을 생성하지 않습니다.
 - FCM 푸시 전송 실패는 경고 로그만 남기며 알림 저장에는 영향을 주지 않습니다.
-- FCM 메시지 `data` 페이로드에는 `notificationId`, `noteId`, `type` 필드가 포함됩니다.

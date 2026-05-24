@@ -38,7 +38,8 @@ public class MemberServiceImpl implements MemberService {
             FollowRepository followRepository,
             MemberReportRepository memberReportRepository,
             BlockService blockService,
-            PasswordHashService passwordHashService
+            PasswordHashService passwordHashService,
+            FcmNotificationTokenRepository fcmNotificationTokenRepository
     ) {
         this.memberRepository = memberRepository;
         this.followRepository = followRepository;
