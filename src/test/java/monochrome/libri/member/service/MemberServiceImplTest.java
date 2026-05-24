@@ -11,6 +11,7 @@ import monochrome.libri.member.domain.MemberReportReason;
 import monochrome.libri.member.domain.MemberStatus;
 import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
 import monochrome.libri.member.dto.request.MemberUpdateRequestDto;
+import monochrome.libri.fcm.repository.FcmNotificationTokenRepository;
 import monochrome.libri.member.repository.MemberReportRepository;
 import monochrome.libri.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class MemberServiceImplTest {
 
     @Mock
     private PasswordHashService passwordHashService;
+
+    @Mock
+    private FcmNotificationTokenRepository fcmNotificationTokenRepository;
 
     @InjectMocks
     private monochrome.libri.member.service.impl.MemberServiceImpl service;
@@ -93,6 +97,7 @@ class MemberServiceImplTest {
 
         service.withdraw(1L);
 
+        verify(fcmNotificationTokenRepository).deleteByMember_Id(1L);
         assertThat(member.getMemberStatus()).isEqualTo(MemberStatus.DELETE);
     }
 

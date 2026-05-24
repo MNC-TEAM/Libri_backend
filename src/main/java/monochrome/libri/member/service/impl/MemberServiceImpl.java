@@ -6,6 +6,8 @@ import monochrome.libri.follow.repository.FollowRepository;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.security.PasswordHashService;
+import monochrome.libri.fcm.domain.FcmNotificationToken;
+import monochrome.libri.fcm.repository.FcmNotificationTokenRepository;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.domain.MemberReport;
 import monochrome.libri.member.dto.request.MemberReportCreateRequestDto;
@@ -29,19 +31,22 @@ public class MemberServiceImpl implements MemberService {
     private final MemberReportRepository memberReportRepository;
     private final BlockService blockService;
     private final PasswordHashService passwordHashService;
+    private final FcmNotificationTokenRepository fcmNotificationTokenRepository;
 
     public MemberServiceImpl(
             MemberRepository memberRepository,
             FollowRepository followRepository,
             MemberReportRepository memberReportRepository,
             BlockService blockService,
-            PasswordHashService passwordHashService
+            PasswordHashService passwordHashService,
+            FcmNotificationTokenRepository fcmNotificationTokenRepository
     ) {
         this.memberRepository = memberRepository;
         this.followRepository = followRepository;
         this.memberReportRepository = memberReportRepository;
         this.blockService = blockService;
         this.passwordHashService = passwordHashService;
+        this.fcmNotificationTokenRepository = fcmNotificationTokenRepository;
     }
 
     @Override
@@ -146,9 +151,11 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional
     public void withdraw(Long memberId) {
         Member member = getRequiredMember(memberId);
 
+        fcmNotificationTokenRepository.deleteByMember_Id(memberId);
         member.withdraw();
     }
 
@@ -163,5 +170,22 @@ public class MemberServiceImpl implements MemberService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @Override
+    @Transactional
+    public void updateFcmRegistrationToken(long memberId, String token) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));
+        if (token == null || token.isBlank()) {
+            fcmNotificationTokenRepository.deleteByMember_Id(memberId);
+            return;
+        }
+        String trimmed = token.trim();
+        fcmNotificationTokenRepository.findByMember_IdAndToken(memberId, trimmed)
+                .ifPresentOrElse(
+                        FcmNotificationToken::touchLastUsed,
+                        () -> fcmNotificationTokenRepository.save(FcmNotificationToken.create(member, trimmed))
+                );
     }
 }

@@ -10,3 +10,8 @@ spring:
 logging:
   level:
     root: INFO
+
+# 운영: 키는 JAR에 넣지 말고 FIREBASE_CREDENTIALS_PATH=file:... 등으로 주입
+#firebase:
+#  enabled: ${FIREBASE_ENABLED:false}
+#  credentials-path: ${FIREBASE_CREDENTIALS_PATH:}

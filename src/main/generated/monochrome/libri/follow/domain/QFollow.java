@@ -22,6 +22,14 @@ public class QFollow extends EntityPathBase<Follow> {
 
     public static final QFollow follow = new QFollow("follow");
 
+    public final monochrome.libri.global.domain.QAuditableEntity _super = new monochrome.libri.global.domain.QAuditableEntity(this);
+
+    //inherited
+    public final NumberPath<Long> createdBy = _super.createdBy;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdDate = _super.createdDate;
+
     public final monochrome.libri.member.domain.QMember follower;
 
     public final monochrome.libri.member.domain.QMember following;
@@ -29,6 +37,12 @@ public class QFollow extends EntityPathBase<Follow> {
     public final EnumPath<FollowStatus> followStatus = createEnum("followStatus", FollowStatus.class);
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    //inherited
+    public final NumberPath<Long> lastModifiedBy = _super.lastModifiedBy;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;
 
     public QFollow(String variable) {
         this(Follow.class, forVariable(variable), INITS);

@@ -28,6 +28,7 @@ public enum ErrorCode {
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "노트를 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "N002", "댓글을 찾을 수 없습니다."),
     COMMENT_REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "N003", "이미 신고한 댓글입니다."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N003", "알림을 찾을 수 없습니다."),
     MEMBER_REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "N004", "이미 신고한 회원입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "리뷰를 찾을 수 없습니다."),
     NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "O001", "공지사항을 찾을 수 없습니다."),

@@ -44,3 +44,8 @@ app:
     bucket: ${AWS_S3_BUCKET:}
     public-base-url: ${AWS_S3_PUBLIC_BASE_URL:}
     upload-expiration-seconds: ${AWS_S3_UPLOAD_EXPIRATION_SECONDS:300}
+
+# Firebase FCM — 키 파일: src/main/resources/libri-firebase.json
+firebase:
+  enabled: ${FIREBASE_ENABLED:true}
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH:classpath:libri-firebase.json}

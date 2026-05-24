@@ -19,6 +19,14 @@ public class QMember extends EntityPathBase<Member> {
 
     public static final QMember member = new QMember("member1");
 
+    public final monochrome.libri.global.domain.QAuditableEntity _super = new monochrome.libri.global.domain.QAuditableEntity(this);
+
+    //inherited
+    public final NumberPath<Long> createdBy = _super.createdBy;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> createdDate = _super.createdDate;
+
     public final StringPath email = createString("email");
 
     public final BooleanPath emailVerified = createBoolean("emailVerified");
@@ -27,11 +35,19 @@ public class QMember extends EntityPathBase<Member> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    //inherited
+    public final NumberPath<Long> lastModifiedBy = _super.lastModifiedBy;
+
+    //inherited
+    public final DateTimePath<java.time.LocalDateTime> lastModifiedDate = _super.lastModifiedDate;
+
     public final EnumPath<MemberStatus> memberStatus = createEnum("memberStatus", MemberStatus.class);
 
     public final StringPath nickname = createString("nickname");
 
     public final StringPath passwordHash = createString("passwordHash");
+
+    public final BooleanPath privateAccount = createBoolean("privateAccount");
 
     public final StringPath profilePath = createString("profilePath");
 

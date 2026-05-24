@@ -44,4 +44,6 @@ public interface MemberService {
      * 회원 탈퇴
      */
     void withdraw(Long memberId);
+
+    void updateFcmRegistrationToken(long memberId, String token);
 }
