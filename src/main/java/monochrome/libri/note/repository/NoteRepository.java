@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,14 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     Optional<Note> findWithMemberById(long noteId);
     int countByShelfId(long shelfId);
     Optional<Note> findByIdAndShelfId(long noteId, long shelfId);
+
+    @EntityGraph(attributePaths = {"shelf", "member"})
+    Slice<Note> findByShelfBookIdAndSecretFalseOrderByCreatedDateDesc(long bookId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"shelf", "member"})
+    Slice<Note> findByShelfBookIdAndSecretFalseAndMemberIdNotInOrderByCreatedDateDesc(
+            long bookId,
+            Collection<Long> memberIds,
+            Pageable pageable
+    );
 }

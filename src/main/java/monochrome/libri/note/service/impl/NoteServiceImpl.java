@@ -1,6 +1,7 @@
 package monochrome.libri.note.service.impl;
 
 import monochrome.libri.block.service.BlockService;
+import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
@@ -10,6 +11,8 @@ import monochrome.libri.note.domain.Note;
 import monochrome.libri.note.domain.NoteProgressType;
 import monochrome.libri.note.dto.request.NoteCreateRequestDto;
 import monochrome.libri.note.dto.request.NoteUpdateRequestDto;
+import monochrome.libri.note.dto.response.BookNoteItemResponseDto;
+import monochrome.libri.note.dto.response.BookNoteSliceResponseDto;
 import monochrome.libri.note.dto.response.NoteBookmarkItemResponseDto;
 import monochrome.libri.note.dto.response.NoteBookmarkListResponseDto;
 import monochrome.libri.note.dto.response.NoteDetailResponseDto;
@@ -35,6 +38,7 @@ import java.util.List;
 public class NoteServiceImpl implements NoteService {
 
     private final NoteRepository noteRepository;
+    private final BookRepository bookRepository;
     private final ShelfRepository shelfRepository;
     private final MemberService memberService;
     private final NoteLikeRepository noteLikeRepository;
@@ -44,6 +48,7 @@ public class NoteServiceImpl implements NoteService {
 
     public NoteServiceImpl(
             NoteRepository noteRepository,
+            BookRepository bookRepository,
             ShelfRepository shelfRepository,
             MemberService memberService,
             NoteLikeRepository noteLikeRepository,
@@ -52,6 +57,7 @@ public class NoteServiceImpl implements NoteService {
             BlockService blockService
     ) {
         this.noteRepository = noteRepository;
+        this.bookRepository = bookRepository;
         this.shelfRepository = shelfRepository;
         this.memberService = memberService;
         this.noteLikeRepository = noteLikeRepository;
@@ -87,6 +93,44 @@ public class NoteServiceImpl implements NoteService {
                 .build();
 
         noteRepository.save(note);
+    }
+
+    @Override
+    public BookNoteSliceResponseDto getPublicNotesByBook(long bookId, long memberId, Pageable pageable) {
+        if (!bookRepository.existsById(bookId)) {
+            throw new LibriException(ErrorCode.BOOK_NOT_FOUND);
+        }
+
+        Slice<Note> slice = getPublicBookNoteSlice(bookId, memberId, pageable);
+        List<Note> notes = slice.getContent();
+        List<Long> noteIds = notes.stream().map(Note::getId).toList();
+        var likedIds = resolveLikedIds(memberId, noteIds);
+        var bookmarkedIds = resolveBookmarkedIds(memberId, noteIds);
+        var commentCounts = resolveCommentCounts(noteIds);
+
+        List<BookNoteItemResponseDto> content = notes.stream()
+                .map(note -> new BookNoteItemResponseDto(
+                        note.getId(),
+                        note.getShelf().getId(),
+                        note.getMember().getId(),
+                        note.getMember().getNickname(),
+                        note.getProgressType(),
+                        note.getProgressValue(),
+                        note.getCreatedDate(),
+                        note.getContent(),
+                        note.getLikeCount(),
+                        (int) commentCounts.getOrDefault(note.getId(), 0L).longValue(),
+                        likedIds.contains(note.getId()),
+                        bookmarkedIds.contains(note.getId())
+                ))
+                .toList();
+
+        return new BookNoteSliceResponseDto(
+                content,
+                slice.hasNext(),
+                slice.getNumber(),
+                slice.getSize()
+        );
     }
 
     @Override
@@ -405,6 +449,18 @@ public class NoteServiceImpl implements NoteService {
             }
         }
         return counts;
+    }
+
+    private Slice<Note> getPublicBookNoteSlice(long bookId, long memberId, Pageable pageable) {
+        java.util.Set<Long> blockedRelationIds = blockService.getBlockedRelationMemberIds(memberId);
+        if (blockedRelationIds.isEmpty()) {
+            return noteRepository.findByShelfBookIdAndSecretFalseOrderByCreatedDateDesc(bookId, pageable);
+        }
+        return noteRepository.findByShelfBookIdAndSecretFalseAndMemberIdNotInOrderByCreatedDateDesc(
+                bookId,
+                blockedRelationIds,
+                pageable
+        );
     }
 
     @Override

@@ -1,7 +1,6 @@
 package monochrome.libri.follow.service;
 
 import monochrome.libri.block.service.BlockService;
-import lombok.extern.slf4j.Slf4j;
 import monochrome.libri.follow.domain.Follow;
 import monochrome.libri.follow.domain.FollowStatus;
 import monochrome.libri.follow.dto.MemberSummaryDto;
@@ -13,14 +12,17 @@ import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
 import monochrome.libri.notification.domain.NotificationType;
 import monochrome.libri.notification.service.NotificationService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class FollowServiceImpl implements FollowService{
+
+    private static final Logger log = LoggerFactory.getLogger(FollowServiceImpl.class);
 
     private final FollowRepository followRepository;
     private final MemberService memberService;

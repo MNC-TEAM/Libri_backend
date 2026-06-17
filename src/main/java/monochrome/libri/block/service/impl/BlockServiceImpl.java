@@ -90,6 +90,14 @@ public class BlockServiceImpl implements BlockService {
                 || memberBlockRepository.existsByBlockerIdAndBlockedId(otherMemberId, memberId);
     }
 
+    @Override
+    public java.util.Set<Long> getBlockedRelationMemberIds(long memberId) {
+        if (memberId <= 0) {
+            return java.util.Set.of();
+        }
+        return new java.util.HashSet<>(memberBlockRepository.findBlockedRelationMemberIds(memberId));
+    }
+
     private Member getMember(long memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new LibriException(ErrorCode.MEMBER_NOT_FOUND));

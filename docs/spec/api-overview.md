@@ -124,6 +124,195 @@
 - 로그인 성공 시 access/refresh token 둘 다 저장
 - 이후 인증 API는 access token만 헤더에 사용
 
+### 소셜 로그인
+
+- `POST /auth/login/social`
+- Auth: 없음
+
+지원 provider:
+
+- `KAKAO`
+- `APPLE`
+
+요청 규칙:
+
+- `provider=KAKAO` 이면 `accessToken` 필수, `idToken` 생략
+- `provider=APPLE` 이면 `idToken` 필수, `accessToken` 생략
+- 토큰은 프론트가 각 SDK 또는 네이티브 로그인 결과에서 받아서 백엔드로 전달
+
+동작 방식:
+
+- 이미 연동된 소셜 계정이면 기존 회원으로 로그인
+- 같은 이메일의 기존 회원이 있으면 해당 회원에 자동 연동 후 로그인
+- 일치 회원이 없으면 새 회원 생성 후 로그인
+
+입력:
+
+- `provider`
+- `accessToken`
+- `idToken`
+
+카카오 요청 예시:
+
+```json
+{
+  "provider": "KAKAO",
+  "accessToken": "kakao-access-token"
+}
+```
+
+애플 요청 예시:
+
+```json
+{
+  "provider": "APPLE",
+  "idToken": "eyJraWQiOiJ...apple-id-token"
+}
+```
+
+출력:
+
+- `tokenType`
+- `accessToken`
+- `refreshToken`
+- `memberResponseDto`
+
+성공 응답 예시:
+
+```json
+{
+  "success": true,
+  "code": "OK",
+  "message": null,
+  "data": {
+    "tokenType": "Bearer",
+    "accessToken": "ACCESS_TOKEN",
+    "refreshToken": "REFRESH_TOKEN",
+    "memberResponseDto": {
+      "id": 12,
+      "provider": "EMAIL",
+      "email": "user@test.com",
+      "nickname": "nick12",
+      "profilePath": "/profile/12",
+      "privateAccount": false,
+      "followerCount": 0,
+      "followingCount": 0
+    }
+  }
+}
+```
+
+대표 에러:
+
+- `A005 INVALID_SOCIAL_TOKEN`
+- `C002 INVALID_INPUT_VALUE`
+- `A001 AUTHENTICATION_FAILED`
+
+프론트 포인트:
+
+- 성공 시 이메일 로그인과 동일하게 `accessToken`, `refreshToken` 둘 다 저장
+- `tokenType`은 현재 `Bearer`로 고정이지만 그대로 사용
+- 이후 인증 API는 `Authorization: Bearer {accessToken}` 헤더 사용
+- `memberResponseDto.provider`는 회원의 기본 가입 타입이며, 자동 연동된 경우 `EMAIL`일 수 있음
+
+프론트 구현 순서:
+
+1. 카카오/애플 SDK로 사용자 로그인 진행
+2. SDK 결과에서 provider별 토큰 획득
+3. 백엔드 `/api/v1/auth/login/social` 호출
+4. 응답의 `accessToken`, `refreshToken` 저장
+5. 이후 API부터 access token만 Authorization 헤더에 첨부
+
+카카오 프론트 예시:
+
+```ts
+const kakaoAccessToken = await getKakaoAccessTokenFromSdk();
+
+const response = await fetch("/api/v1/auth/login/social", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    provider: "KAKAO",
+    accessToken: kakaoAccessToken,
+  }),
+});
+
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+  throw new Error(result.message ?? "카카오 로그인에 실패했습니다.");
+}
+
+const { tokenType, accessToken, refreshToken, memberResponseDto } = result.data;
+localStorage.setItem("accessToken", accessToken);
+localStorage.setItem("refreshToken", refreshToken);
+```
+
+애플 프론트 예시:
+
+```ts
+const appleIdToken = await getAppleIdTokenFromSdk();
+
+const response = await fetch("/api/v1/auth/login/social", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    provider: "APPLE",
+    idToken: appleIdToken,
+  }),
+});
+
+const result = await response.json();
+
+if (!response.ok || !result.success) {
+  throw new Error(result.message ?? "애플 로그인에 실패했습니다.");
+}
+
+const { accessToken, refreshToken } = result.data;
+localStorage.setItem("accessToken", accessToken);
+localStorage.setItem("refreshToken", refreshToken);
+```
+
+에러 처리 가이드:
+
+- `A005`: 소셜 토큰 만료, 위조, 잘못된 provider 토큰. 프론트는 SDK 로그인부터 다시 시도
+- `C002`: body 누락 또는 잘못된 요청. 프론트 버그 또는 잘못된 파라미터
+- `A001`: 이미 다른 회원에 연동된 소셜 계정 등 인증 불일치 상황
+
+소셜 로그인 예외 케이스 표:
+
+| 상황 | HTTP | code | 프론트 처리 |
+| --- | --- | --- | --- |
+| `provider` 누락 | 400 | `C002` | 요청 body 구성 오류 수정 |
+| `provider=KAKAO`인데 `accessToken` 없음 | 400 | `C002` | 카카오 SDK 결과 확인 후 재요청 |
+| `provider=APPLE`인데 `idToken` 없음 | 400 | `C002` | 애플 SDK 결과 확인 후 재요청 |
+| 지원하지 않는 provider 전달 | 400 | `C002` | 프론트 상수값 확인 |
+| 카카오 access token 만료/위조 | 401 | `A005` | 카카오 로그인부터 다시 시작 |
+| 애플 id token 만료/서명 불일치 | 401 | `A005` | 애플 로그인부터 다시 시작 |
+| 애플 audience(client id) 불일치 | 401 | `A005` | 앱 번들 ID, 서비스 ID, 환경변수 설정 확인 |
+| 이미 다른 회원에 연결된 소셜 계정으로 충돌 | 401 | `A001` | 자동 재시도하지 말고 문의/안내 처리 |
+| 탈퇴 회원에 연결된 소셜 계정 로그인 | 401 | `M003` | 재가입 정책 확인 필요. 현재는 로그인 실패 처리 |
+| 소셜 provider에서 이메일 미제공 | 200 | `OK` | 정상 로그인 가능. 이메일 없이 가입/로그인될 수 있음 |
+| 같은 이메일의 기존 계정 발견 | 200 | `OK` | 정상 로그인. 백엔드가 자동 연동 처리 |
+
+프론트 에러 메시지 처리 권장:
+
+- `C002`는 개발 중이면 필드 매핑 오류를 우선 의심
+- `A005`는 사용자에게 "로그인이 만료되었어요. 다시 시도해주세요." 수준으로 안내
+- `A001`은 자동 연동 충돌 가능성이 있으므로 일반 재시도보다 고객센터 문의 문구가 안전
+- `M003`은 현재 메시지가 이메일 로그인과 공용일 수 있으므로, 필요하면 추후 소셜 전용 코드 분리 검토
+
+주의:
+
+- 애플은 이메일이 항상 내려오지 않을 수 있다
+- 카카오는 이메일 동의가 없으면 이메일이 비어 있을 수 있다
+- 백엔드는 이메일이 없더라도 provider 식별자로 회원 생성/로그인 가능
+- 자동 연동은 이메일이 정확히 일치할 때만 수행한다
+
 ### 액세스 토큰 재발급
 
 - `POST /auth/refresh`
