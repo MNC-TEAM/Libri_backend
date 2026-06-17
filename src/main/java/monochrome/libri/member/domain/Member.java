@@ -90,4 +90,11 @@ public class Member extends AuditableEntity {
     public void withdraw() {
         this.memberStatus = MemberStatus.DELETE;
     }
+
+    public void verifyEmailFromSocialProvider(boolean emailVerifiedFromProvider) {
+        if (emailVerifiedFromProvider) {
+            this.emailVerifiedFromProvider = true;
+            this.emailVerified = true;
+        }
+    }
 }

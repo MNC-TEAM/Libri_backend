@@ -13,6 +13,18 @@
 - 소셜 계정(passwordHash == null)은 INVALID_LOGIN으로 실패한다.
 - 로그인 시 비밀번호 해시를 검증한다.
 
+### Login (Social)
+- Social 로그인은 provider별 토큰 검증에 성공해야 한다.
+- 현재 지원 provider는 `KAKAO`, `APPLE`이다.
+- `KAKAO`는 `accessToken`으로 사용자 정보를 조회한다.
+- `APPLE`는 `idToken`을 Apple 공개키로 검증한다.
+- 이미 연동된 `(provider, providerUserId)`가 있으면 해당 회원으로 로그인한다.
+- 같은 이메일의 기존 회원이 있으면 소셜 계정을 자동 연동한다.
+- 이메일 일치 회원이 없으면 새 회원을 생성한다.
+- 탈퇴 회원(memberStatus=DELETE)은 INVALID_LOGIN으로 실패한다.
+- provider 토큰 검증 실패는 INVALID_SOCIAL_TOKEN으로 실패한다.
+- 이미 다른 회원에 연동된 provider 식별자 충돌은 AUTHENTICATION_FAILED로 실패한다.
+
 ### JWT (Access Token)
 - 로그인 성공 시 Access Token을 발급한다.
 - Access Token은 `sub=memberId`를 포함한다.
@@ -65,4 +77,4 @@
   - verification token 발급/만료/재발송/rate limit
   - 인증 완료 시 emailVerified=true 및 상태 전환(PENDING -> ACTIVE)
 - JWT Refresh Token(재발급, 탈취 대응, 로그아웃 정책)
-- 소셜 로그인(구글/카카오/애플) 정책 및 중복/연동 정책
+- 소셜 로그인(구글) 추가 검토

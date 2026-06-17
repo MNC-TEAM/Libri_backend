@@ -8,12 +8,17 @@ import monochrome.libri.global.swagger.ApiErrorCodes;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
 import monochrome.libri.member.dto.request.RefreshTokenRequestDto;
-import monochrome.libri.member.dto.request.SocialSignUpRequestDto;
+import monochrome.libri.member.dto.request.SocialLoginRequestDto;
 import monochrome.libri.member.dto.response.LoginResponseDto;
+import monochrome.libri.member.dto.response.LoginApiResponseDoc;
 import monochrome.libri.member.dto.response.MemberResponseDto;
 import monochrome.libri.member.dto.response.TokenRefreshResponseDto;
 import monochrome.libri.member.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,17 +69,190 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginByEmail(
             @Valid @RequestBody EmailLoginRequestDto request
     ) {
-        MemberResponseDto memberResponse = authService.loginByEmail(request);
-        var tokenPair = jwtTokenService.issueTokenPair(memberResponse.id());
+        return ResponseEntity.ok(ApiResponse.ok(issueLoginResponse(authService.loginByEmail(request))));
+    }
 
-        LoginResponseDto response = LoginResponseDto.of(
-                tokenPair.tokenType(),
-                tokenPair.accessToken(),
-                tokenPair.refreshToken(),
-                memberResponse
-        );
-
-        return ResponseEntity.ok(ApiResponse.ok(response));
+    @ApiErrorCodes({
+            ErrorCode.INVALID_SOCIAL_TOKEN,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    @PostMapping("/login/social")
+    @Operation(
+            summary = "소셜 로그인",
+            description = """
+                    카카오/애플 로그인 후 access/refresh token을 발급합니다.
+                    
+                    요청 규칙:
+                    - provider=KAKAO 이면 accessToken 필수, idToken 생략
+                    - provider=APPLE 이면 idToken 필수, accessToken 생략
+                    
+                    동작 방식:
+                    - 이미 연동된 소셜 계정이면 해당 회원으로 로그인
+                    - 같은 이메일의 기존 회원이 있으면 자동 연동 후 로그인
+                    - 일치 회원이 없으면 새 회원을 생성한 뒤 로그인
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "소셜 로그인 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginApiResponseDoc.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "KakaoSocialLoginSuccess",
+                                            summary = "카카오 로그인 성공",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "code": "OK",
+                                                      "message": null,
+                                                      "data": {
+                                                        "tokenType": "Bearer",
+                                                        "accessToken": "ACCESS_TOKEN",
+                                                        "refreshToken": "REFRESH_TOKEN",
+                                                        "memberResponseDto": {
+                                                          "id": 12,
+                                                          "provider": "EMAIL",
+                                                          "email": "user@test.com",
+                                                          "nickname": "nick12",
+                                                          "profilePath": "/profile/12",
+                                                          "privateAccount": false,
+                                                          "followerCount": 0,
+                                                          "followingCount": 0
+                                                        }
+                                                      }
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "AppleSocialLoginSuccess",
+                                            summary = "애플 로그인 성공",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "code": "OK",
+                                                      "message": null,
+                                                      "data": {
+                                                        "tokenType": "Bearer",
+                                                        "accessToken": "ACCESS_TOKEN",
+                                                        "refreshToken": "REFRESH_TOKEN",
+                                                        "memberResponseDto": {
+                                                          "id": 34,
+                                                          "provider": "APPLE",
+                                                          "email": null,
+                                                          "nickname": "apple_000123",
+                                                          "profilePath": null,
+                                                          "privateAccount": false,
+                                                          "followerCount": 0,
+                                                          "followingCount": 0
+                                                        }
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "MissingKakaoAccessToken",
+                                            summary = "카카오 accessToken 누락",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "code": "C002",
+                                                      "message": "잘못된 요청입니다.",
+                                                      "data": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "UnsupportedProvider",
+                                            summary = "지원하지 않는 provider",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "code": "C002",
+                                                      "message": "잘못된 요청입니다.",
+                                                      "data": null
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "소셜 토큰 검증 실패 또는 계정 연동 충돌",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "InvalidSocialToken",
+                                            summary = "카카오/애플 토큰 검증 실패",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "code": "A005",
+                                                      "message": "유효하지 않은 소셜 로그인 토큰입니다.",
+                                                      "data": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "AuthenticationConflict",
+                                            summary = "이미 다른 회원에 연동된 소셜 계정",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "code": "A001",
+                                                      "message": "인증에 실패했습니다.",
+                                                      "data": null
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "WithdrawnMemberSocialLogin",
+                                            summary = "탈퇴 회원 로그인 시도",
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "code": "M003",
+                                                      "message": "이메일 또는 비밀번호가 올바르지 않습니다.",
+                                                      "data": null
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    public ResponseEntity<ApiResponse<LoginResponseDto>> loginBySocial(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = """
+                            카카오 예시:
+                            {
+                              "provider": "KAKAO",
+                              "accessToken": "kakao-access-token"
+                            }
+                            
+                            애플 예시:
+                            {
+                              "provider": "APPLE",
+                              "idToken": "apple-id-token"
+                            }
+                            """
+            )
+            @Valid @RequestBody SocialLoginRequestDto request
+    ) {
+        return ResponseEntity.ok(ApiResponse.ok(issueLoginResponse(authService.loginBySocial(request))));
     }
 
     /**
@@ -117,5 +295,15 @@ public class AuthController {
         authService.logout(request.refreshToken());
         jwtTokenService.revokeRefreshToken(request.refreshToken());
         return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    private LoginResponseDto issueLoginResponse(MemberResponseDto memberResponse) {
+        var tokenPair = jwtTokenService.issueTokenPair(memberResponse.id());
+        return LoginResponseDto.of(
+                tokenPair.tokenType(),
+                tokenPair.accessToken(),
+                tokenPair.refreshToken(),
+                memberResponse
+        );
     }
 }

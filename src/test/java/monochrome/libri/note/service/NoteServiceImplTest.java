@@ -2,6 +2,7 @@ package monochrome.libri.note.service;
 
 import monochrome.libri.TestFixtures;
 import monochrome.libri.block.service.BlockService;
+import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.comment.repository.NoteCommentRepository;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
@@ -37,6 +38,9 @@ class NoteServiceImplTest {
 
     @Mock
     private NoteRepository noteRepository;
+
+    @Mock
+    private BookRepository bookRepository;
 
     @Mock
     private ShelfRepository shelfRepository;
@@ -121,6 +125,62 @@ class NoteServiceImplTest {
 
         assertThat(response.shelfId()).isEqualTo(2L);
         assertThat(response.isOwner()).isTrue();
+    }
+
+    @Test
+    void getPublicNotesByBook_filtersBlockedMembers() {
+        Member viewer = TestFixtures.member(1L);
+        Member blockedAuthor = TestFixtures.member(2L);
+        Shelf shelf = TestFixtures.shelf(20L, blockedAuthor, TestFixtures.book(3L, 100));
+        Note note = TestFixtures.note(10L, shelf, blockedAuthor, false);
+
+        when(bookRepository.existsById(3L)).thenReturn(true);
+        when(blockService.getBlockedRelationMemberIds(1L)).thenReturn(java.util.Set.of(2L));
+        when(noteRepository.findByShelfBookIdAndSecretFalseAndMemberIdNotInOrderByCreatedDateDesc(
+                eq(3L), eq(java.util.Set.of(2L)), any()
+        ))
+                .thenReturn(new SliceImpl<>(List.of(note), PageRequest.of(0, 10), false));
+        when(noteCommentRepository.countByNoteIds(List.of(10L))).thenReturn(List.of());
+        when(noteLikeRepository.findNoteIdsByMemberIdAndNoteIdIn(1L, List.of(10L))).thenReturn(List.of());
+        when(noteBookmarkRepository.findNoteIdsByMemberIdAndNoteIdIn(1L, List.of(10L))).thenReturn(List.of());
+
+        var response = service.getPublicNotesByBook(3L, 1L, PageRequest.of(0, 10));
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).memberId()).isEqualTo(2L);
+        verify(noteRepository).findByShelfBookIdAndSecretFalseAndMemberIdNotInOrderByCreatedDateDesc(
+                eq(3L), eq(java.util.Set.of(2L)), any()
+        );
+        verify(noteRepository, never()).findByShelfBookIdAndSecretFalseOrderByCreatedDateDesc(anyLong(), any());
+    }
+
+    @Test
+    void getPublicNotesByBook_usesDefaultQueryWhenNoBlockedMembers() {
+        Member author = TestFixtures.member(2L);
+        Shelf shelf = TestFixtures.shelf(20L, author, TestFixtures.book(3L, 100));
+        Note note = TestFixtures.note(10L, shelf, author, false);
+
+        when(bookRepository.existsById(3L)).thenReturn(true);
+        when(blockService.getBlockedRelationMemberIds(1L)).thenReturn(java.util.Set.of());
+        when(noteRepository.findByShelfBookIdAndSecretFalseOrderByCreatedDateDesc(eq(3L), any()))
+                .thenReturn(new SliceImpl<>(List.of(note), PageRequest.of(0, 10), false));
+        when(noteCommentRepository.countByNoteIds(List.of(10L))).thenReturn(List.of());
+        when(noteLikeRepository.findNoteIdsByMemberIdAndNoteIdIn(1L, List.of(10L))).thenReturn(List.of());
+        when(noteBookmarkRepository.findNoteIdsByMemberIdAndNoteIdIn(1L, List.of(10L))).thenReturn(List.of());
+
+        var response = service.getPublicNotesByBook(3L, 1L, PageRequest.of(0, 10));
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).shelfId()).isEqualTo(20L);
+        verify(noteRepository).findByShelfBookIdAndSecretFalseOrderByCreatedDateDesc(eq(3L), any());
+    }
+
+    @Test
+    void getPublicNotesByBook_throwsWhenBookMissing() {
+        when(bookRepository.existsById(3L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.getPublicNotesByBook(3L, 1L, PageRequest.of(0, 10)))
+                .isInstanceOf(LibriException.class);
     }
 
     @Test

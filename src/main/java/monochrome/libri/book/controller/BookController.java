@@ -9,6 +9,8 @@ import monochrome.libri.book.dto.response.BookDetailResponseDto;
 import monochrome.libri.book.dto.response.BookSliceResponseDto;
 import monochrome.libri.book.service.BookService;
 import monochrome.libri.search.service.SearchService;
+import monochrome.libri.note.dto.response.BookNoteSliceResponseDto;
+import monochrome.libri.note.service.NoteService;
 import monochrome.libri.global.swagger.ApiErrorCodes;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,10 +33,12 @@ public class BookController {
 
     private final BookService bookService;
     private final SearchService searchService;
+    private final NoteService noteService;
 
-    public BookController(BookService bookService, SearchService searchService) {
+    public BookController(BookService bookService, SearchService searchService, NoteService noteService) {
         this.bookService = bookService;
         this.searchService = searchService;
+        this.noteService = noteService;
     }
 
     @GetMapping
@@ -84,6 +88,32 @@ public class BookController {
     ) {
         Long memberId = userPrincipal == null ? null : userPrincipal.getMemberId();
         BookDetailResponseDto response = bookService.getBookDetail(bookId, memberId);
+        return ResponseEntity.ok(ApiResponse.ok(response));
+    }
+
+    @GetMapping("/{bookId}/notes")
+    @Operation(
+            summary = "도서 노트 목록 조회",
+            description = "도서에 등록된 공개 노트를 페이지네이션으로 조회합니다. 비밀 노트와 차단 관계 회원의 노트는 제외됩니다."
+    )
+    @ApiErrorCodes({
+            ErrorCode.BOOK_NOT_FOUND,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    public ResponseEntity<ApiResponse<BookNoteSliceResponseDto>> getNotesByBook(
+            @PathVariable long bookId,
+            @AuthenticationPrincipal monochrome.libri.global.security.UserPrincipal userPrincipal,
+            @Parameter(description = "페이지(0부터)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        if (page < 0 || size <= 0) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        long memberId = userPrincipal == null ? 0L : userPrincipal.getMemberId();
+        Pageable pageable = PageRequest.of(page, size);
+        BookNoteSliceResponseDto response = noteService.getPublicNotesByBook(bookId, memberId, pageable);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
 
