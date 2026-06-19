@@ -48,9 +48,9 @@
 - 401/403 응답은 공통 응답 포맷(ApiResponse)으로 내려준다.
 
 ### Logout
-- Access Token만 사용하는 Stateless 구조에서 로그아웃은 서버 세션 제거 없이 처리한다.
-- 기본 로그아웃은 클라이언트에서 토큰 삭제로 처리한다.
-  - (추후) Refresh Token 도입 시 서버에서 refresh 무효화 처리한다.
+- 로그아웃 요청 시 body의 refreshToken을 Redis에서 삭제하여 서버 측 세션을 종료한다.
+- 클라이언트도 로컬의 access/refresh token을 즉시 제거한다.
+- refresh token이 이미 만료되었거나 없는 경우에도 로컬 토큰 제거 권장.
 
 ## Tests (Safety Belt)
 

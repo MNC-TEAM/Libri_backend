@@ -357,19 +357,53 @@ localStorage.setItem("refreshToken", refreshToken);
 
 ## Member
 
-### 회원 탈퇴
+### 내 정보 조회
 
-- `DELETE /members/withdraw`
+- `GET /members/me`
 - Auth: 필요
 
 출력:
 
-- `data: null`
+- `MemberResponseDto`
 
 대표 에러:
 
-- `A001 AUTHENTICATION_FAILED`
-- `M001 MEMBER_NOT_FOUND`
+- `A001`
+- `M001`
+
+### 내 비공개 여부 조회
+
+- `GET /members/me/privacy`
+- Auth: 필요
+
+출력:
+
+- `MemberPrivacyResponseDto`
+
+대표 에러:
+
+- `A001`
+- `M001`
+
+### 차단한 회원 목록 조회
+
+- `GET /members/me/blocks`
+- Auth: 필요
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `BlockedMemberListResponseDto`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `C002`
 
 ### 닉네임 변경
 
@@ -403,10 +437,184 @@ localStorage.setItem("refreshToken", refreshToken);
 
 - `MemberResponseDto`
 
+### 프로필 이미지 경로 저장
+
+- `PATCH /members/me/profile-image`
+- Auth: 필요
+
+입력:
+
+- `profilePath`
+
+출력:
+
+- `MemberResponseDto`
+
 비고:
 
-- 현재는 설정 저장까지 적용
-- 실제 공개 범위 제어는 후속 정책 반영 필요
+- S3 업로드 완료 후 해당 경로를 저장하는 API
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `C002`
+
+### 회원 탈퇴
+
+- `DELETE /members/withdraw`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+
+### 회원 프로필 조회
+
+- `GET /members/{memberId}`
+- Auth: 선택
+
+출력:
+
+- `MemberProfileResponseDto`
+- 로그인 상태면 본인 여부, 팔로우 여부 포함
+
+대표 에러:
+
+- `M001`
+
+### 팔로워 목록 조회
+
+- `GET /members/{memberId}/followers`
+- Auth: 없음
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `FollowMemberSliceResponseDto`
+
+대표 에러:
+
+- `M001`
+- `C002`
+
+### 팔로잉 목록 조회
+
+- `GET /members/{memberId}/followings`
+- Auth: 없음
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `FollowMemberSliceResponseDto`
+
+대표 에러:
+
+- `M001`
+- `C002`
+
+### 회원 팔로우
+
+- `POST /members/{memberId}/follow`
+- Auth: 필요
+
+출력:
+
+- `201 Created`
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `F001 EXIST_FOLLOW_RELATION`
+- `F002 SELF_FOLLOW_NOT_ALLOWED`
+- `A002`
+
+### 회원 언팔로우
+
+- `DELETE /members/{memberId}/follow`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `F002`
+- `F003 FOLLOW_NOT_FOUND`
+- `F004 ALREADY_UNFOLLOWED`
+
+### 회원 신고
+
+- `POST /members/{memberId}/reports`
+- Auth: 필요
+
+입력:
+
+- `reason`
+- `detail` (선택)
+
+출력:
+
+- `201 Created`
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `N004 MEMBER_REPORT_ALREADY_EXISTS`
+- `P001 SELF_REPORT_NOT_ALLOWED`
+- `C002`
+
+### 회원 차단
+
+- `POST /members/{memberId}/block`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `K001 BLOCK_ALREADY_EXISTS`
+- `K002 SELF_BLOCK_NOT_ALLOWED`
+
+### 회원 차단 해제
+
+- `DELETE /members/{memberId}/block`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `K002`
+- `K003 BLOCK_NOT_FOUND`
 
 ## Home
 
@@ -717,6 +925,30 @@ Query:
 
 - `DELETE /notes/{noteId}/comments/{commentId}`
 - Auth: 필요
+
+### 노트 댓글 신고
+
+- `POST /notes/{noteId}/comments/{commentId}/reports`
+- Auth: 필요
+
+입력:
+
+- `reason`
+- `detail` (선택)
+
+출력:
+
+- `201 Created`
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `N001`
+- `N002`
+- `N003 COMMENT_REPORT_ALREADY_EXISTS`
+- `C002`
 
 ## Review
 
@@ -1111,11 +1343,144 @@ Query:
 - `200 OK`
 - `content: []`
 
+## Notification
+
+### 알림 목록 조회
+
+- `GET /notifications`
+- Auth: 필요
+
+Query:
+
+- `page`
+- `size`
+
+출력:
+
+- `NotificationSliceResponseDto`
+  - `totalCount`
+  - `content[]`: id, noteId, content, actorProfilePath, actorMemberId, read, createdAt, notificationType
+  - `hasNext`, `page`, `size`
+
+비고:
+
+- 소프트 삭제된 알림은 제외
+- notificationType: `LIKED` | `COMMENT` | `FOLLOW`
+- `FOLLOW` 타입은 `noteId = null`
+
+대표 에러:
+
+- `A001`
+- `C002`
+
+### 알림 읽음 처리
+
+- `PATCH /notifications/{notificationId}/read`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `N003 NOTIFICATION_NOT_FOUND`
+
+### 알림 전체 읽음 처리
+
+- `PATCH /notifications/read-all`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+
+### 알림 삭제
+
+- `DELETE /notifications/{notificationId}`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+- `A002`
+- `N003 NOTIFICATION_NOT_FOUND`
+
+### 알림 전체 삭제
+
+- `DELETE /notifications/all`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+대표 에러:
+
+- `A001`
+
+## FCM Token
+
+### FCM 토큰 등록
+
+- `POST /fcm-tokens`
+- Auth: 필요
+
+입력:
+
+- `fcmToken` (필수, 최대 512자)
+
+출력:
+
+- `201 Created`
+- `data: null`
+
+비고:
+
+- 동일 회원+토큰 조합이 이미 존재하면 `last_used_date`만 갱신
+
+대표 에러:
+
+- `A001`
+- `M001`
+- `C002`
+
+### FCM 토큰 전체 삭제
+
+- `DELETE /fcm-tokens`
+- Auth: 필요
+
+출력:
+
+- `data: null`
+
+비고:
+
+- 로그아웃 또는 푸시 알림 수신 거부 시 호출
+
+대표 에러:
+
+- `A001`
+- `M001`
+
 ## 대표 에러 코드
 
+- `C001`
+  - 서버 에러
 - `C002`
-  - 잘못된 요청
-  - validation 실패 포함
+  - 잘못된 요청 / validation 실패
+- `C003`
+  - S3 설정 누락
 - `A001`
   - 인증 실패
 - `A002`
@@ -1129,7 +1494,9 @@ Query:
 - `M002`
   - 중복 이메일
 - `M003`
-  - 로그인 실패
+  - 로그인 실패 (이메일/비밀번호 불일치)
+- `M004`
+  - 탈퇴한 회원
 - `B001`
   - 도서 없음
 - `S001`
@@ -1138,19 +1505,41 @@ Query:
   - 노트 없음
 - `N002`
   - 댓글 없음
+- `N003`
+  - 댓글 신고 중복 또는 알림 없음 (코드 충돌 존재 — 코드 참고)
+- `N004`
+  - 회원 신고 중복
 - `R001`
   - 리뷰 없음
 - `O001`
   - 공지사항 없음
 - `Q001`
   - 문의 없음
+- `F001`
+  - 이미 팔로우한 회원
+- `F002`
+  - 자기 자신 팔로우 불가
+- `F003`
+  - 팔로우 관계 없음
+- `F004`
+  - 이미 언팔로우 상태
+- `K001`
+  - 이미 차단한 회원
+- `K002`
+  - 자기 자신 차단 불가
+- `K003`
+  - 차단 관계 없음
+- `P001`
+  - 자기 자신 신고 불가
 
 ## 프론트 체크리스트
 
 - 로그인 후 access/refresh token 둘 다 저장
-- refresh 성공 시 access/refresh token 둘 다 교체
+- refresh 성공 시 access/refresh token 둘 다 교체 (Rotation 방식)
 - 비로그인 빈 배열 정책 API는 `401`이 아니라 `200 + empty content`로 처리
 - validation 실패는 `C002`와 `message`를 그대로 사용자에게 노출 가능
-- 직접 등록 도서 수정은 등록자만 가능하므로 `ACCESS_DENIED` 처리 필요
-- 비공개 계정 설정은 현재 저장까지 반영되며, 실제 접근 제한 정책은 후속 반영 가능성 있음
+- 직접 등록 도서 수정은 등록자만 가능하므로 `A002 ACCESS_DENIED` 처리 필요
 - 관리자 전용 공지/문의 API는 토큰이 있어도 일반 사용자면 `A002` 처리
+- 팔로우/차단/신고는 본인 대상 시도 시 각각 `F002`, `K002`, `P001` 처리 필요
+- 알림 기능 이용 시 FCM 토큰을 로그인 후 등록, 로그아웃 시 전체 삭제
+- `N003`은 댓글 신고 중복(`COMMENT_REPORT_ALREADY_EXISTS`)과 알림 없음(`NOTIFICATION_NOT_FOUND`)에 동시 사용됨 (코드 충돌)

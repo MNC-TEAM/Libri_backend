@@ -6,7 +6,7 @@ import monochrome.libri.member.domain.SignType;
 
 public record SocialLoginRequestDto(
         @Schema(
-                description = "소셜 로그인 제공자. 현재 KAKAO, APPLE 지원",
+                description = "소셜 로그인 제공자. KAKAO, APPLE, GOOGLE 지원",
                 example = "KAKAO"
         )
         @NotNull(message = "소셜 로그인 제공자는 필수입니다.")
@@ -20,6 +20,11 @@ public record SocialLoginRequestDto(
                 description = "애플 로그인 후 프론트가 받은 id token(JWT). provider=APPLE 일 때 사용",
                 example = "eyJraWQiOiJ...apple-id-token"
         )
-        String idToken
+        String idToken,
+        @Schema(
+                description = "구글 로그인 후 프론트가 받은 authorization code. provider=GOOGLE 일 때 사용",
+                example = "4/0AX4XfWh..."
+        )
+        String code
 ) {
 }
