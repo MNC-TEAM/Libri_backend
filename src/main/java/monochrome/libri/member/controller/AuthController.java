@@ -80,12 +80,13 @@ public class AuthController {
     @Operation(
             summary = "소셜 로그인",
             description = """
-                    카카오/애플 로그인 후 access/refresh token을 발급합니다.
-                    
+                    소셜 로그인 후 access/refresh token을 발급합니다.
+
                     요청 규칙:
-                    - provider=KAKAO 이면 accessToken 필수, idToken 생략
-                    - provider=APPLE 이면 idToken 필수, accessToken 생략
-                    
+                    - provider=KAKAO  → accessToken 필수
+                    - provider=APPLE  → idToken 필수
+                    - provider=GOOGLE → code(인가 코드) 필수
+
                     동작 방식:
                     - 이미 연동된 소셜 계정이면 해당 회원으로 로그인
                     - 같은 이메일의 기존 회원이 있으면 자동 연동 후 로그인

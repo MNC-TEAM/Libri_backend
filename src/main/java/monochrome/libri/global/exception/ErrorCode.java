@@ -18,12 +18,14 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A003", "유효하지 않은 리프레시 토큰입니다."),
     TOKEN_TYPE_MISMATCH(HttpStatus.UNAUTHORIZED, "A004", "토큰 타입이 올바르지 않습니다."),
     INVALID_SOCIAL_TOKEN(HttpStatus.UNAUTHORIZED, "A005", "유효하지 않은 소셜 로그인 토큰입니다."),
+    GOOGLE_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "A006", "Google 인증에 실패했습니다."),
 
     // 회원 관련
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "존재하지 않는 회원입니다."),
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "M002", "이미 가입된 이메일입니다."),
     INVALID_LOGIN(HttpStatus.UNAUTHORIZED, "M003", "이메일 또는 비밀번호가 올바르지 않습니다."),
     MEMBER_WITHDRAWN(HttpStatus.BAD_REQUEST, "M004", "탈퇴한 회원입니다."),
+    SOCIAL_EMAIL_CONFLICT(HttpStatus.CONFLICT, "M005", "이미 다른 방식으로 가입된 이메일입니다."),
     BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "B001", "존재하지 않는 도서입니다."),
     SHELF_NOT_FOUND(HttpStatus.NOT_FOUND, "S001", "책장 정보를 찾을 수 없습니다."),
     NOTE_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "노트를 찾을 수 없습니다."),

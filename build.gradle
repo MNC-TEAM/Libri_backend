@@ -63,6 +63,7 @@ dependencies {
 	// Firebase Admin (FCM) — monochrome.libri.firebase 패키지
 	implementation 'com.google.firebase:firebase-admin:9.5.0'
 
+
 	// Querydsl (Spring Boot 3.x = jakarta) — Lombok 다음에 querydsl-apt 두는 것이 Q타입 생성에 안전
 	implementation "com.querydsl:querydsl-jpa:${querydslVersion}:jakarta"
 	annotationProcessor "com.querydsl:querydsl-apt:${querydslVersion}:jakarta"

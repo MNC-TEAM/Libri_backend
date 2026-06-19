@@ -7,6 +7,8 @@ JPA `@Entity` 기준으로 `src/main/java` 하위 도메인을 정리했습니�
 | 엔티티 | 테이블명(명시/기본) | 패키지 |
 |--------|---------------------|--------|
 | Member | `member` | `member.domain` |
+| MemberReport | `member_report` | `member.domain` |
+| MemberBlock | `member_block` | `block.domain` |
 | FcmNotificationToken | `fcm_notification_token` | `fcm.domain` |
 | Book | `book` (기본) | `book.domain` |
 | Shelf | `shelf` | `shelf.domain` |
@@ -14,6 +16,7 @@ JPA `@Entity` 기준으로 `src/main/java` 하위 도메인을 정리했습니�
 | NoteLike | `note_like` | `note.domain` |
 | NoteBookmark | `note_bookmark` | `note.domain` |
 | NoteComment | `note_comment` | `comment.domain` |
+| NoteCommentReport | `note_comment_report` | `comment.domain` |
 | Follow | `follow` (기본) | `follow.domain` |
 | Review | `review` | `review.domain` |
 | ReviewBookmark | `review_bookmark` | `review.domain` |
@@ -45,8 +48,17 @@ erDiagram
     note ||--o{ note_comment : "note_id"
     member ||--o{ note_comment : "member_id"
 
+    note_comment ||--o{ note_comment_report : "note_comment_id"
+    member ||--o{ note_comment_report : "reporter_member_id"
+
     member ||--o{ follow : "follow_id (follower)"
     member ||--o{ follow : "following_id (following)"
+
+    member ||--o{ member_report : "reported_member_id"
+    member ||--o{ member_report : "reporter_member_id"
+
+    member ||--o{ member_block : "blocker_member_id"
+    member ||--o{ member_block : "blocked_member_id"
 
     book ||--o{ review : "book_id"
     member ||--o{ review : "member_id"
@@ -136,6 +148,28 @@ erDiagram
         string content
     }
 
+    note_comment_report {
+        bigint note_comment_report_id PK
+        bigint note_comment_id FK
+        bigint reporter_member_id FK
+        string reason
+        string detail
+    }
+
+    member_report {
+        bigint member_report_id PK
+        bigint reported_member_id FK
+        bigint reporter_member_id FK
+        string reason
+        string detail
+    }
+
+    member_block {
+        bigint member_block_id PK
+        bigint blocker_member_id FK
+        bigint blocked_member_id FK
+    }
+
     follow {
         bigint member_follow PK
         bigint follow_id FK
@@ -209,6 +243,9 @@ erDiagram
 - `shelf`: `(member_id, book_id)`
 - `note_like`: `(note_id, member_id)`
 - `note_bookmark`: `(note_id, member_id)`
+- `note_comment_report`: `(note_comment_id, reporter_member_id)`
+- `member_report`: `(reported_member_id, reporter_member_id)`
+- `member_block`: `(blocker_member_id, blocked_member_id)`
 - `review_bookmark`: `(review_id, member_id)`
 - `fcm_notification_token`: `(member_id, token)`
 
