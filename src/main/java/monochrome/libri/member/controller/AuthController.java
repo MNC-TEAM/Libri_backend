@@ -83,7 +83,7 @@ public class AuthController {
                     소셜 로그인 후 access/refresh token을 발급합니다.
 
                     요청 규칙:
-                    - provider=KAKAO  → accessToken 필수
+                    - provider=KAKAO  → code(인가 코드) 필수
                     - provider=APPLE  → idToken 필수
                     - provider=GOOGLE → code(인가 코드) 필수
 
@@ -163,8 +163,8 @@ public class AuthController {
                             mediaType = "application/json",
                             examples = {
                                     @ExampleObject(
-                                            name = "MissingKakaoAccessToken",
-                                            summary = "카카오 accessToken 누락",
+                                            name = "MissingKakaoAuthorizationCode",
+                                            summary = "카카오 인가 코드 누락",
                                             value = """
                                                     {
                                                       "success": false,
@@ -241,7 +241,7 @@ public class AuthController {
                             카카오 예시:
                             {
                               "provider": "KAKAO",
-                              "accessToken": "kakao-access-token"
+                              "code": "kakao-authorization-code"
                             }
                             
                             애플 예시:

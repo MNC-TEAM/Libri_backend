@@ -12,17 +12,12 @@ public record SocialLoginRequestDto(
         @NotNull(message = "소셜 로그인 제공자는 필수입니다.")
         SignType provider,
         @Schema(
-                description = "카카오 로그인 후 프론트가 받은 access token. provider=KAKAO 일 때 사용",
-                example = "kakao-access-token"
-        )
-        String accessToken,
-        @Schema(
                 description = "애플 로그인 후 프론트가 받은 id token(JWT). provider=APPLE 일 때 사용",
                 example = "eyJraWQiOiJ...apple-id-token"
         )
         String idToken,
         @Schema(
-                description = "구글 로그인 후 프론트가 받은 authorization code. provider=GOOGLE 일 때 사용",
+                description = "카카오/구글 로그인 후 프론트가 받은 authorization code. provider=KAKAO 또는 provider=GOOGLE 일 때 사용",
                 example = "4/0AX4XfWh..."
         )
         String code
