@@ -1,23 +1,18 @@
 package monochrome.libri.member.social;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import monochrome.libri.global.exception.ErrorCode;
-import monochrome.libri.global.exception.LibriException;
+import monochrome.libri.global.security.oauth.kakao.KakaoOAuthClient;
 import monochrome.libri.member.domain.SignType;
 import monochrome.libri.member.dto.request.SocialLoginRequestDto;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
 @Component
 public class KakaoSocialLoginProvider implements SocialLoginProvider {
 
-    private final RestClient restClient;
+    private final KakaoOAuthClient kakaoOAuthClient;
 
-    public KakaoSocialLoginProvider(@Qualifier("kakaoSocialRestClient") RestClient restClient) {
-        this.restClient = restClient;
+    public KakaoSocialLoginProvider(KakaoOAuthClient kakaoOAuthClient) {
+        this.kakaoOAuthClient = kakaoOAuthClient;
     }
 
     @Override
@@ -27,24 +22,10 @@ public class KakaoSocialLoginProvider implements SocialLoginProvider {
 
     @Override
     public SocialUserInfo authenticate(SocialLoginRequestDto request) {
-        String accessToken = normalize(request.accessToken());
-        if (accessToken == null) {
-            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        KakaoUserResponse response;
-        try {
-            response = restClient.get()
-                    .uri("/v2/user/me")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                    .retrieve()
-                    .body(KakaoUserResponse.class);
-        } catch (RestClientException e) {
-            throw new LibriException("카카오 사용자 조회에 실패했습니다.", e, ErrorCode.INVALID_SOCIAL_TOKEN);
-        }
+        KakaoUserResponse response = kakaoOAuthClient.getUserInfo(request.code());
 
         if (response == null || response.id() == null) {
-            throw new LibriException(ErrorCode.INVALID_SOCIAL_TOKEN);
+            throw kakaoOAuthClient.invalidSocialToken();
         }
 
         String email = null;
@@ -71,14 +52,14 @@ public class KakaoSocialLoginProvider implements SocialLoginProvider {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record KakaoUserResponse(
+    public record KakaoUserResponse(
             Long id,
             KakaoAccount kakaoAccount
     ) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record KakaoAccount(
+    public record KakaoAccount(
             String email,
             Boolean isEmailVerified
     ) {

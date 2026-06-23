@@ -17,6 +17,13 @@ public class SocialLoginConfig {
     }
 
     @Bean
+    public RestClient kakaoAuthRestClient(SocialLoginProperties properties) {
+        return RestClient.builder()
+                .baseUrl(properties.kakao().authBaseUrl())
+                .build();
+    }
+
+    @Bean
     public RestClient appleSocialRestClient(SocialLoginProperties properties) {
         return RestClient.builder()
                 .baseUrl(properties.apple().baseUrl())

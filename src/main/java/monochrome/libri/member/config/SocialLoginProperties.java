@@ -10,7 +10,11 @@ public record SocialLoginProperties(
         Apple apple
 ) {
     public record Kakao(
-            String baseUrl
+            String baseUrl,
+            String authBaseUrl,
+            String clientId,
+            String clientSecret,
+            String redirectUri
     ) {
     }
 

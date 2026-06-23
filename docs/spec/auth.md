@@ -16,7 +16,7 @@
 ### Login (Social)
 - Social 로그인은 provider별 토큰 검증에 성공해야 한다.
 - 현재 지원 provider는 `KAKAO`, `APPLE`이다.
-- `KAKAO`는 `accessToken`으로 사용자 정보를 조회한다.
+- `KAKAO`는 프론트가 전달한 `authorization code`를 서버가 교환해 사용자 정보를 조회한다.
 - `APPLE`는 `idToken`을 Apple 공개키로 검증한다.
 - 이미 연동된 `(provider, providerUserId)`가 있으면 해당 회원으로 로그인한다.
 - 같은 이메일의 기존 회원이 있으면 소셜 계정을 자동 연동한다.
