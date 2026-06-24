@@ -2,9 +2,12 @@ package monochrome.libri.member.controller;
 
 import jakarta.validation.Valid;
 import monochrome.libri.global.exception.ErrorCode;
+import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.global.response.ApiResponse;
 import monochrome.libri.global.security.token.JwtTokenService;
 import monochrome.libri.global.swagger.ApiErrorCodes;
+import monochrome.libri.member.config.SocialLoginProperties;
+import monochrome.libri.member.domain.SignType;
 import monochrome.libri.member.dto.request.EmailLoginRequestDto;
 import monochrome.libri.member.dto.request.EmailSignUpRequestDto;
 import monochrome.libri.member.dto.request.RefreshTokenRequestDto;
@@ -19,9 +22,13 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -29,10 +36,16 @@ public class AuthController {
 
     private final AuthService authService;
     private final JwtTokenService jwtTokenService;
+    private final SocialLoginProperties socialLoginProperties;
 
-    public AuthController(AuthService authService, JwtTokenService jwtTokenService) {
+    public AuthController(
+            AuthService authService,
+            JwtTokenService jwtTokenService,
+            SocialLoginProperties socialLoginProperties
+    ) {
         this.authService = authService;
         this.jwtTokenService = jwtTokenService;
+        this.socialLoginProperties = socialLoginProperties;
     }
 
     /**
@@ -254,6 +267,47 @@ public class AuthController {
             @Valid @RequestBody SocialLoginRequestDto request
     ) {
         return ResponseEntity.ok(ApiResponse.ok(issueLoginResponse(authService.loginBySocial(request))));
+    }
+
+    @GetMapping("/login/kakao")
+    @Operation(
+            summary = "카카오 로그인 시작",
+            description = "카카오 인증 페이지로 리다이렉트합니다."
+    )
+    public ResponseEntity<Void> redirectToKakaoLogin() {
+        URI authorizationUri = UriComponentsBuilder
+                .fromUriString(socialLoginProperties.kakao().authBaseUrl())
+                .path("/oauth/authorize")
+                .queryParam("response_type", "code")
+                .queryParam("client_id", socialLoginProperties.kakao().clientId())
+                .queryParam("redirect_uri", socialLoginProperties.kakao().redirectUri())
+                .build(true)
+                .toUri();
+
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .header(HttpHeaders.LOCATION, authorizationUri.toString())
+                .build();
+    }
+
+    @ApiErrorCodes({
+            ErrorCode.INVALID_SOCIAL_TOKEN,
+            ErrorCode.INVALID_INPUT_VALUE
+    })
+    @GetMapping("/login/kakao/callback")
+    @Operation(
+            summary = "카카오 로그인 콜백",
+            description = "카카오 인가 코드를 받아 로그인 또는 회원가입을 처리합니다."
+    )
+    public ResponseEntity<ApiResponse<Void>> loginByKakaoCallback(
+            @RequestParam(required = false) String code
+    ) {
+        if (code == null || code.isBlank()) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        SocialLoginRequestDto request = new SocialLoginRequestDto(SignType.KAKAO, null, code);
+        authService.loginBySocial(request);
+        return ResponseEntity.ok(ApiResponse.ok());
     }
 
     /**
