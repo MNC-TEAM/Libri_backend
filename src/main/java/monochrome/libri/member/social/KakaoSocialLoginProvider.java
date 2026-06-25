@@ -22,7 +22,9 @@ public class KakaoSocialLoginProvider implements SocialLoginProvider {
 
     @Override
     public SocialUserInfo authenticate(SocialLoginRequestDto request) {
-        KakaoUserResponse response = kakaoOAuthClient.getUserInfo(request.code());
+        KakaoUserResponse response = hasText(request.accessToken())
+                ? kakaoOAuthClient.getUserInfoByAccessToken(request.accessToken())
+                : kakaoOAuthClient.getUserInfo(request.code());
 
         if (response == null || response.id() == null) {
             throw kakaoOAuthClient.invalidSocialToken();
@@ -49,6 +51,10 @@ public class KakaoSocialLoginProvider implements SocialLoginProvider {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean hasText(String value) {
+        return normalize(value) != null;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

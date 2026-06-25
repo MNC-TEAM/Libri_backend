@@ -43,6 +43,15 @@ public class KakaoOAuthClient {
         return fetchUserInfo(accessToken);
     }
 
+    public KakaoSocialLoginProvider.KakaoUserResponse getUserInfoByAccessToken(String accessToken) {
+        String normalizedAccessToken = normalize(accessToken);
+        if (normalizedAccessToken == null) {
+            throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        return fetchUserInfo(normalizedAccessToken);
+    }
+
     public LibriException invalidSocialToken() {
         return new LibriException(ErrorCode.INVALID_SOCIAL_TOKEN);
     }
