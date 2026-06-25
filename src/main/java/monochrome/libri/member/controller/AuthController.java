@@ -96,7 +96,7 @@ public class AuthController {
                     소셜 로그인 후 access/refresh token을 발급합니다.
 
                     요청 규칙:
-                    - provider=KAKAO  → code(인가 코드) 필수
+                    - provider=KAKAO  → accessToken 또는 code(인가 코드) 중 하나 필수
                     - provider=APPLE  → idToken 필수
                     - provider=GOOGLE → code(인가 코드) 필수
 
@@ -251,7 +251,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<LoginResponseDto>> loginBySocial(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = """
-                            카카오 예시:
+                            카카오 access token 예시:
+                            {
+                              "provider": "KAKAO",
+                              "accessToken": "kakao-access-token"
+                            }
+
+                            카카오 authorization code 예시:
                             {
                               "provider": "KAKAO",
                               "code": "kakao-authorization-code"
@@ -305,7 +311,7 @@ public class AuthController {
             throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        SocialLoginRequestDto request = new SocialLoginRequestDto(SignType.KAKAO, null, code);
+        SocialLoginRequestDto request = new SocialLoginRequestDto(SignType.KAKAO, null, null, code);
         authService.loginBySocial(request);
         return ResponseEntity.ok(ApiResponse.ok());
     }

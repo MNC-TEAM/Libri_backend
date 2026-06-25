@@ -17,6 +17,11 @@ public record SocialLoginRequestDto(
         )
         String idToken,
         @Schema(
+                description = "카카오 로그인 후 프론트가 받은 access token. provider=KAKAO 일 때 사용",
+                example = "eyJhbGciOiJIUzI1NiJ9...kakao-access-token"
+        )
+        String accessToken,
+        @Schema(
                 description = "카카오/구글 로그인 후 프론트가 받은 authorization code. provider=KAKAO 또는 provider=GOOGLE 일 때 사용",
                 example = "4/0AX4XfWh..."
         )

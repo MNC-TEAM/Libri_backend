@@ -136,7 +136,7 @@
 
 요청 규칙:
 
-- `provider=KAKAO` 이면 `code` 필수, `idToken` 생략
+- `provider=KAKAO` 이면 `accessToken` 또는 `code` 중 하나 필수, `idToken` 생략
 - `provider=APPLE` 이면 `idToken` 필수, `accessToken` 생략
 - 토큰은 프론트가 각 SDK 또는 네이티브 로그인 결과에서 받아서 백엔드로 전달
 
@@ -153,6 +153,15 @@
 - `idToken`
 
 카카오 요청 예시:
+
+```json
+{
+  "provider": "KAKAO",
+  "accessToken": "kakao-access-token"
+}
+```
+
+카카오 authorization code 요청 예시:
 
 ```json
 {
@@ -226,7 +235,7 @@
 카카오 프론트 예시:
 
 ```ts
-const kakaoAuthorizationCode = await getKakaoAuthorizationCodeFromSdk();
+const kakaoAccessToken = await getKakaoAccessTokenFromSdk();
 
 const response = await fetch("/api/v1/auth/login/social", {
   method: "POST",
@@ -235,7 +244,7 @@ const response = await fetch("/api/v1/auth/login/social", {
   },
   body: JSON.stringify({
     provider: "KAKAO",
-    code: kakaoAuthorizationCode,
+    accessToken: kakaoAccessToken,
   }),
 });
 
@@ -288,7 +297,7 @@ localStorage.setItem("refreshToken", refreshToken);
 | 상황 | HTTP | code | 프론트 처리 |
 | --- | --- | --- | --- |
 | `provider` 누락 | 400 | `C002` | 요청 body 구성 오류 수정 |
-| `provider=KAKAO`인데 `code` 없음 | 400 | `C002` | 카카오 SDK 결과 확인 후 재요청 |
+| `provider=KAKAO`인데 `accessToken`, `code` 모두 없음 | 400 | `C002` | 카카오 SDK 결과 확인 후 재요청 |
 | `provider=APPLE`인데 `idToken` 없음 | 400 | `C002` | 애플 SDK 결과 확인 후 재요청 |
 | 지원하지 않는 provider 전달 | 400 | `C002` | 프론트 상수값 확인 |
 | 카카오 access token 만료/위조 | 401 | `A005` | 카카오 로그인부터 다시 시작 |

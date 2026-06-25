@@ -84,6 +84,7 @@ class AuthControllerTest {
         ArgumentCaptor<SocialLoginRequestDto> captor = ArgumentCaptor.forClass(SocialLoginRequestDto.class);
         verify(authService).loginBySocial(captor.capture());
         assertThat(captor.getValue().provider()).isEqualTo(SignType.KAKAO);
+        assertThat(captor.getValue().accessToken()).isNull();
         assertThat(captor.getValue().code()).isEqualTo("kakao-code");
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody().success()).isTrue();

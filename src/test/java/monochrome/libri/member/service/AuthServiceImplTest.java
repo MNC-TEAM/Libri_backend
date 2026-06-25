@@ -131,7 +131,7 @@ class AuthServiceImplTest {
         when(socialAccountRepository.findByMemberIdAndProvider(1L, SignType.KAKAO))
                 .thenReturn(Optional.empty());
 
-        var response = service.loginBySocial(new SocialLoginRequestDto(SignType.KAKAO, null, "code"));
+        var response = service.loginBySocial(new SocialLoginRequestDto(SignType.KAKAO, null, null, "code"));
 
         assertThat(response.id()).isEqualTo(1L);
         verify(socialAccountRepository).save(any());
@@ -152,7 +152,7 @@ class AuthServiceImplTest {
                         .emailVerifiedFromProvider(true)
                         .build()));
 
-        var response = service.loginBySocial(new SocialLoginRequestDto(SignType.KAKAO, null, "code"));
+        var response = service.loginBySocial(new SocialLoginRequestDto(SignType.KAKAO, null, null, "code"));
 
         assertThat(response.id()).isEqualTo(1L);
         verify(socialAccountRepository, never()).save(any());
@@ -172,7 +172,7 @@ class AuthServiceImplTest {
         when(socialAccountRepository.findByMemberIdAndProvider(2L, SignType.KAKAO))
                 .thenReturn(Optional.empty());
 
-        var response = service.loginBySocial(new SocialLoginRequestDto(SignType.KAKAO, null, "code"));
+        var response = service.loginBySocial(new SocialLoginRequestDto(SignType.KAKAO, null, null, "code"));
 
         assertThat(response.id()).isEqualTo(2L);
         verify(authRepository).save(any(Member.class));
