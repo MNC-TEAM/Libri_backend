@@ -24,12 +24,12 @@ public class GoogleSocialLoginProvider implements SocialLoginProvider {
 
     @Override
     public SocialUserInfo authenticate(SocialLoginRequestDto request) {
-        String code = request.code();
-        if (code == null || code.isBlank()) {
+        String idToken = request.idToken();
+        if (idToken == null || idToken.isBlank()) {
             throw new LibriException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        GoogleUserInfo userInfo = googleOAuthClient.getUserInfo(code);
+        GoogleUserInfo userInfo = googleOAuthClient.verifyIdToken(idToken);
         return new SocialUserInfo(
                 SignType.GOOGLE,
                 userInfo.id(),

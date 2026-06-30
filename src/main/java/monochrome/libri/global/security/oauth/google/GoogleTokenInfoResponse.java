@@ -2,10 +2,11 @@ package monochrome.libri.global.security.oauth.google;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record GoogleUserInfo(
-        String id,
+record GoogleTokenInfoResponse(
+        String sub,
         String email,
-        boolean verifiedEmail,
+        @JsonProperty("email_verified") String emailVerified,
         String name,
-        String picture
+        String picture,
+        String aud
 ) {}
