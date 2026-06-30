@@ -98,7 +98,7 @@ public class AuthController {
                     요청 규칙:
                     - provider=KAKAO  → accessToken 또는 code(인가 코드) 중 하나 필수
                     - provider=APPLE  → idToken 필수
-                    - provider=GOOGLE → code(인가 코드) 필수
+                    - provider=GOOGLE → idToken(Google Sign-In SDK에서 받은 ID Token) 필수
 
                     동작 방식:
                     - 이미 연동된 소셜 계정이면 해당 회원으로 로그인
