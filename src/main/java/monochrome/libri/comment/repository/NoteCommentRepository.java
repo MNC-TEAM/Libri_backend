@@ -20,6 +20,8 @@ public interface NoteCommentRepository extends JpaRepository<NoteComment, Long> 
 
     long countByNoteId(long noteId);
 
+    void deleteByNoteId(long noteId);
+
     Optional<NoteComment> findByIdAndNoteId(long commentId, long noteId);
 
     @EntityGraph(attributePaths = {"note", "note.member", "member"})

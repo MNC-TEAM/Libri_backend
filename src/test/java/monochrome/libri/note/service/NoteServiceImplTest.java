@@ -4,6 +4,7 @@ import monochrome.libri.TestFixtures;
 import monochrome.libri.block.service.BlockService;
 import monochrome.libri.book.repository.BookRepository;
 import monochrome.libri.comment.repository.NoteCommentRepository;
+import monochrome.libri.comment.repository.NoteCommentReportRepository;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.member.service.MemberService;
@@ -56,6 +57,9 @@ class NoteServiceImplTest {
 
     @Mock
     private NoteCommentRepository noteCommentRepository;
+
+    @Mock
+    private NoteCommentReportRepository noteCommentReportRepository;
 
     @Mock
     private BlockService blockService;
@@ -236,5 +240,28 @@ class NoteServiceImplTest {
         assertThatThrownBy(() -> service.deleteNote(2L, 10L, 999L))
                 .isInstanceOf(LibriException.class);
         verify(noteRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteNote_deletesReferencingDataBeforeNote() {
+        Member owner = TestFixtures.member(1L);
+        Shelf shelf = TestFixtures.shelf(2L, owner, TestFixtures.book(3L, 100));
+        Note note = TestFixtures.note(10L, shelf, owner, false);
+        when(noteRepository.findByIdAndShelfId(10L, 2L)).thenReturn(Optional.of(note));
+
+        service.deleteNote(2L, 10L, 1L);
+
+        InOrder deletionOrder = inOrder(
+                noteCommentReportRepository,
+                noteCommentRepository,
+                noteLikeRepository,
+                noteBookmarkRepository,
+                noteRepository
+        );
+        deletionOrder.verify(noteCommentReportRepository).deleteByNoteId(10L);
+        deletionOrder.verify(noteCommentRepository).deleteByNoteId(10L);
+        deletionOrder.verify(noteLikeRepository).deleteByNoteId(10L);
+        deletionOrder.verify(noteBookmarkRepository).deleteByNoteId(10L);
+        deletionOrder.verify(noteRepository).delete(note);
     }
 }

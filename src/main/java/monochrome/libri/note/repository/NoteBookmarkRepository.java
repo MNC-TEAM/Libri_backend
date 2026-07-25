@@ -18,6 +18,7 @@ public interface NoteBookmarkRepository extends JpaRepository<NoteBookmark, Long
     boolean existsByNoteIdAndMemberId(long noteId, long memberId);
     Optional<NoteBookmark> findByNoteIdAndMemberId(long noteId, long memberId);
     void deleteByNoteIdAndMemberId(long noteId, long memberId);
+    void deleteByNoteId(long noteId);
     @Query("select nb.note.id from NoteBookmark nb where nb.member.id = :memberId and nb.note.id in :noteIds")
     List<Long> findNoteIdsByMemberIdAndNoteIdIn(@Param("memberId") long memberId, @Param("noteIds") Collection<Long> noteIds);
     long countByNoteId(long noteId);
