@@ -6,6 +6,7 @@ import monochrome.libri.global.exception.ErrorCode;
 import monochrome.libri.global.exception.LibriException;
 import monochrome.libri.member.domain.Member;
 import monochrome.libri.comment.repository.NoteCommentRepository;
+import monochrome.libri.comment.repository.NoteCommentReportRepository;
 import monochrome.libri.member.service.MemberService;
 import monochrome.libri.note.domain.Note;
 import monochrome.libri.note.domain.NoteProgressType;
@@ -44,6 +45,7 @@ public class NoteServiceImpl implements NoteService {
     private final NoteLikeRepository noteLikeRepository;
     private final NoteBookmarkRepository noteBookmarkRepository;
     private final NoteCommentRepository noteCommentRepository;
+    private final NoteCommentReportRepository noteCommentReportRepository;
     private final BlockService blockService;
 
     public NoteServiceImpl(
@@ -54,6 +56,7 @@ public class NoteServiceImpl implements NoteService {
             NoteLikeRepository noteLikeRepository,
             NoteBookmarkRepository noteBookmarkRepository,
             NoteCommentRepository noteCommentRepository,
+            NoteCommentReportRepository noteCommentReportRepository,
             BlockService blockService
     ) {
         this.noteRepository = noteRepository;
@@ -63,6 +66,7 @@ public class NoteServiceImpl implements NoteService {
         this.noteLikeRepository = noteLikeRepository;
         this.noteBookmarkRepository = noteBookmarkRepository;
         this.noteCommentRepository = noteCommentRepository;
+        this.noteCommentReportRepository = noteCommentReportRepository;
         this.blockService = blockService;
     }
 
@@ -477,6 +481,11 @@ public class NoteServiceImpl implements NoteService {
             throw new LibriException(ErrorCode.ACCESS_DENIED);
         }
 
+        // FK로 노트를 참조하는 행을 부모 노트보다 먼저 제거한다.
+        noteCommentReportRepository.deleteByNoteId(noteId);
+        noteCommentRepository.deleteByNoteId(noteId);
+        noteLikeRepository.deleteByNoteId(noteId);
+        noteBookmarkRepository.deleteByNoteId(noteId);
         noteRepository.delete(note);
     }
 }
